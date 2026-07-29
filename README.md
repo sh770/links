@@ -6,6 +6,7 @@
 - `admin.html` — ממשק ניהול הקישורים.
 - `index.html` — דף בית כללי (נגיש בלי כינוי).
 - `style.css` — עיצוב אחיד לכל הדפים (ערכת נושא כהה ומעוגלת).
+- `favicon.svg`, `favicon.ico`, `apple-touch-icon.png` — אייקון האתר.
 
 ## איך זה עובד
 - `links.json` — **ה-כינוי הוא המפתח (key) של כל רשומה, לא שדה בתוכה** -
@@ -87,8 +88,9 @@
 ## הקמה
 הקבצים כבר מוגדרים עבור `sh770/links` - אין צריך לערוך שום דבר בקוד.
 
-1. צור ריפו בשם `links` תחת החשבון `sh770` והעלה אליו את חמשת הקבצים
-   (`links.json`, `404.html`, `admin.html`, `index.html`, `style.css`).
+1. צור ריפו בשם `links` תחת החשבון `sh770` והעלה אליו את כל הקבצים
+   (`links.json`, `404.html`, `admin.html`, `index.html`, `style.css`,
+   `favicon.svg`, `favicon.ico`, `apple-touch-icon.png`).
 2. הפעל GitHub Pages: Settings → Pages → Source: `main` branch, `/ (root)`.
 3. זהו.
 

@@ -13,6 +13,8 @@
   // טוען את style.css מהנתיב הנכון (לא ניתן להשתמש ב-<link> קבוע כי
   // דף 404 מוגש עבור כתובות שונות, אז הנתיב היחסי לא תמיד נכון)
   document.write('<link rel="stylesheet" href="' + (REPO_BASE || "/") + 'style.css">');
+  document.write('<link rel="icon" href="' + (REPO_BASE || "/") + 'favicon.svg" type="image/svg+xml">');
+  document.write('<link rel="icon" href="' + (REPO_BASE || "/") + 'favicon.ico" sizes="32x32">');
 </script>
 </head>
 <body>
