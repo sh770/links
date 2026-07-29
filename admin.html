@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ניהול קישורים</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;background:#f4f5f7;color:#222;margin:0;padding:24px}
+  .wrap{max-width:880px;margin:0 auto}
+  h1{font-size:20px}
+  .card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:20px;margin-bottom:16px}
+  input,button{font-size:16px;padding:8px 10px;border-radius:6px;border:1px solid #ccc}
+  input{width:100%;box-sizing:border-box;margin-bottom:8px}
+  button{background:#2563eb;color:#fff;border:none;cursor:pointer}
+  button.secondary{background:#eee;color:#222}
+  button.danger{background:#dc2626;color:#fff}
+  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+  td,th{padding:6px;border-bottom:1px solid #eee;text-align:right;vertical-align:middle}
+  .row-actions button{margin-inline-start:4px;padding:4px 8px;font-size:12px}
+  .msg{font-size:13px;margin-top:8px}
+  .err{color:#dc2626}
+  .ok{color:#16a34a}
+  .addgrid{display:grid;grid-template-columns:1fr 1.6fr 0.9fr 0.9fr 1fr auto;gap:8px;align-items:start}
+  small{color:#666}
+  .badge{font-size:11px;padding:2px 6px;border-radius:10px;background:#eee}
+  .badge.on{background:#dbeafe;color:#1d4ed8}
+  input.small{width:70px}
+  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:780px}
+  @media (max-width:600px){
+    body{padding:12px}
+    .addgrid{grid-template-columns:1fr}
+    .addgrid button{width:100%}
+    input.small{width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ניהול קישורים</h1>
+
+  <div class="card" id="loginCard">
+    <p>הזן את ה-GitHub Token שלך כדי לנהל את הקישורים.</p>
+    <input id="token" type="password" placeholder="GitHub Personal Access Token">
+    <button onclick="login()">התחבר</button>
+    <div id="loginMsg" class="msg"></div>
+    <p><small>הטוקן נשמר רק בדפדפן שלך (localStorage) ולא נכתב לריפו. יש ליצור טוקן עם הרשאת כתיבה לריפו הזה בלבד (ראה README).</small></p>
+  </div>
+
+  <div class="card" id="manageCard" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div id="whoami"></div>
+      <button class="secondary" onclick="logout()">התנתק</button>
+    </div>
+
+    <h3>הוספת קישור</h3>
+    <div class="addgrid">
+      <input id="newSlug" placeholder="slug (למשל: promo)">
+      <input id="newUrl" placeholder="כתובת יעד מלאה (https://...)">
+      <input id="newMax" class="small" type="number" min="1" placeholder="מס' כניסות מקס' (ריק=ללא הגבלה)">
+      <input id="newPw" type="password" placeholder="סיסמה (אופציונלי)">
+      <input id="newCountries" placeholder="מדינות מותרות, לדוגמה IL,US (ריק=כולן)">
+      <button onclick="addLink()">הוסף</button>
+    </div>
+
+    <h3>קישורים קיימים</h3>
+    <div class="tablewrap">
+    <table id="linksTable">
+      <thead><tr>
+        <th>slug</th><th>יעד</th><th>נוצר</th><th>הגבלה</th><th>קליקים</th><th>סיסמה</th><th>מדינות</th><th></th>
+      </tr></thead>
+      <tbody id="linksBody"></tbody>
+    </table>
+    </div>
+    <div id="saveMsg" class="msg"></div>
+  </div>
+</div>
+
+<script>
+let links = {};
+let sha = null;
+
+// חייב להיות זהה לקידומת ב-404.html
+const COUNTER_PREFIX = "sh770links_";
+const COUNTER_API = "https://countapi.mileshilliard.com/api/v1/";
+
+// פרטי הריפו - קבועים, לא צריך להזין אותם בממשק
+const OWNER = "sh770";
+const REPO = "links";
+
+function api(path) {
+  return "https://api.github.com/repos/" + OWNER + "/" + REPO + path;
+}
+function headers() {
+  return {
+    "Authorization": "Bearer " + localStorage.getItem("ls_token"),
+    "Accept": "application/vnd.github+json"
+  };
+}
+
+async function sha256(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function getCount(slug) {
+  try {
+    const res = await fetch(COUNTER_API + "get/" + encodeURIComponent(COUNTER_PREFIX + slug));
+    if (!res.ok) return 0;
+    const data = await res.json();
+    return parseInt(data.value || "0", 10);
+  } catch (e) {
+    return "-";
+  }
+}
+
+async function login() {
+  const token = document.getElementById("token").value.trim();
+  if (!token) {
+    setMsg("loginMsg", "נא להזין טוקן.", true);
+    return;
+  }
+  localStorage.setItem("ls_token", token);
+  await loadLinks();
+}
+
+function logout() {
+  localStorage.removeItem("ls_token");
+  document.getElementById("manageCard").style.display = "none";
+  document.getElementById("loginCard").style.display = "block";
+}
+
+async function loadLinks() {
+  try {
+    const res = await fetch(api("/contents/links.json"), { headers: headers() });
+    if (!res.ok) throw new Error(res.status === 401 || res.status === 403 ? "טוקן לא תקין או ללא הרשאה" : "שגיאה בטעינה (" + res.status + ")");
+    const data = await res.json();
+    sha = data.sha;
+    links = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+    document.getElementById("loginCard").style.display = "none";
+    document.getElementById("manageCard").style.display = "block";
+    document.getElementById("whoami").textContent = OWNER + "/" + REPO;
+    renderTable();
+  } catch (e) {
+    setMsg("loginMsg", e.message, true);
+  }
+}
+
+function fmtDate(iso) {
+  if (!iso) return "-";
+  try { return new Date(iso).toLocaleDateString("he-IL"); } catch (e) { return "-"; }
+}
+
+function renderTable() {
+  const body = document.getElementById("linksBody");
+  body.innerHTML = "";
+  Object.keys(links).sort().forEach(slug => {
+    const link = links[slug];
+    const tr = document.createElement("tr");
+    tr.id = "row-" + slug;
+    tr.innerHTML =
+      '<td>' + slug + '</td>' +
+      '<td><input value="' + (link.url || "").replace(/"/g,'&quot;') + '" onchange="editUrl(\'' + slug + '\', this.value)"></td>' +
+      '<td>' + fmtDate(link.created) + '</td>' +
+      '<td><input class="small" type="number" min="1" value="' + (link.maxClicks || "") + '" placeholder="ללא" onchange="editMax(\'' + slug + '\', this.value)"></td>' +
+      '<td class="clicks">...</td>' +
+      '<td>' +
+        '<span class="badge ' + (link.passwordHash ? 'on' : '') + '">' + (link.passwordHash ? 'מוגן' : 'ללא') + '</span>' +
+        '<input type="password" placeholder="החלף סיסמה" style="margin-top:4px" onchange="editPw(\'' + slug + '\', this.value)">' +
+      '</td>' +
+      '<td><input value="' + (link.allowedCountries ? link.allowedCountries.join(",") : "") + '" placeholder="הכל" onchange="editCountries(\'' + slug + '\', this.value)"></td>' +
+      '<td class="row-actions"><button class="danger" onclick="deleteLink(\'' + slug + '\')">מחק</button></td>';
+    body.appendChild(tr);
+    getCount(slug).then(c => {
+      const cell = document.querySelector("#row-" + slug + " .clicks");
+      if (cell) cell.textContent = link.maxClicks ? (c + " / " + link.maxClicks) : c;
+    });
+  });
+}
+
+function editUrl(slug, value) {
+  links[slug].url = value;
+  saveLinks();
+}
+
+function editMax(slug, value) {
+  links[slug].maxClicks = value ? parseInt(value, 10) : null;
+  saveLinks();
+}
+
+function editCountries(slug, value) {
+  const codes = value.split(",").map(c => c.trim().toUpperCase()).filter(Boolean);
+  links[slug].allowedCountries = codes.length ? codes : null;
+  saveLinks();
+}
+
+async function editPw(slug, value) {
+  if (!value) return;
+  links[slug].passwordHash = await sha256(value);
+  saveLinks();
+  renderTable();
+}
+
+function deleteLink(slug) {
+  if (!confirm("למחוק את " + slug + "?")) return;
+  delete links[slug];
+  renderTable();
+  saveLinks();
+}
+
+async function addLink() {
+  const slug = document.getElementById("newSlug").value.trim();
+  const url = document.getElementById("newUrl").value.trim();
+  const max = document.getElementById("newMax").value.trim();
+  const pw = document.getElementById("newPw").value;
+  const countriesRaw = document.getElementById("newCountries").value.trim();
+  if (!slug || !url) return;
+  const codes = countriesRaw ? countriesRaw.split(",").map(c => c.trim().toUpperCase()).filter(Boolean) : [];
+  links[slug] = {
+    url: url,
+    created: new Date().toISOString(),
+    maxClicks: max ? parseInt(max, 10) : null,
+    passwordHash: pw ? await sha256(pw) : null,
+    allowedCountries: codes.length ? codes : null
+  };
+  document.getElementById("newSlug").value = "";
+  document.getElementById("newUrl").value = "";
+  document.getElementById("newMax").value = "";
+  document.getElementById("newPw").value = "";
+  document.getElementById("newCountries").value = "";
+  renderTable();
+  saveLinks();
+}
+
+async function saveLinks() {
+  try {
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(links, null, 2))));
+    const res = await fetch(api("/contents/links.json"), {
+      method: "PUT",
+      headers: headers(),
+      body: JSON.stringify({
+        message: "עדכון links.json",
+        content: content,
+        sha: sha
+      })
+    });
+    if (!res.ok) throw new Error("שמירה נכשלה (" + res.status + ")");
+    const data = await res.json();
+    sha = data.content.sha;
+    setMsg("saveMsg", "נשמר בהצלחה.", false);
+  } catch (e) {
+    setMsg("saveMsg", e.message, true);
+  }
+}
+
+function setMsg(id, text, isErr) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = "msg " + (isErr ? "err" : "ok");
+}
+
+if (localStorage.getItem("ls_token")) {
+  loadLinks();
+}
+</script>
+</body>
+</html>
