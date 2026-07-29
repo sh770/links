@@ -4,6 +4,8 @@
     "created": "2026-07-29T20:46:04.620Z",
     "maxClicks": null,
     "passwordHash": "2ac9a6746aca543af8dff39894cfe8173afba21eb01c6fae33d52947222855ef",
-    "allowedCountries": null
+    "allowedCountries": [
+      "IL"
+    ]
   }
 }
