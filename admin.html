@@ -183,6 +183,10 @@ function renderList() {
       '</div>' +
       '<div class="link-body" style="display:none">' +
         '<div>' +
+          '<span class="field-label">כינוי (הנתיב בקישור)</span>' +
+          '<input value="' + slug.replace(/"/g,'&quot;') + '" onchange="renameSlug(\'' + slug + '\', this.value)">' +
+        '</div>' +
+        '<div>' +
           '<span class="field-label">כתובת יעד</span>' +
           '<input value="' + (link.url || "").replace(/"/g,'&quot;') + '" onchange="editUrl(\'' + slug + '\', this.value)">' +
         '</div>' +
@@ -225,6 +229,24 @@ function toggleItem(slug) {
   const isOpen = body.style.display !== "none";
   body.style.display = isOpen ? "none" : "block";
   header.classList.toggle("open", !isOpen);
+}
+
+function renameSlug(oldSlug, newSlugRaw) {
+  const newSlug = newSlugRaw.trim();
+  if (!newSlug || newSlug === oldSlug) {
+    renderList();
+    return;
+  }
+  if (links[newSlug]) {
+    toast('הכינוי "' + newSlug + '" כבר תפוס');
+    renderList();
+    return;
+  }
+  links[newSlug] = links[oldSlug];
+  delete links[oldSlug];
+  renderList();
+  saveLinks();
+  toast('הכינוי שונה ל-"' + newSlug + '" (ספירת הקליקים מתחילה מחדש)');
 }
 
 function editUrl(slug, value) {
