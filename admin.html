@@ -12,7 +12,6 @@
     .addgrid button{width:100%}
   }
   input.small{width:80px}
-  #linksTable{min-width:820px}
 </style>
 </head>
 <body>
@@ -35,7 +34,7 @@
 
     <h3 style="margin-top:18px">הוספת קישור</h3>
     <div class="addgrid">
-      <input id="newSlug" placeholder="slug (למשל: promo)">
+      <input id="newSlug" placeholder="כינוי (למשל: promo)">
       <input id="newUrl" placeholder="כתובת יעד מלאה (https://...)">
       <input id="newMax" class="small" type="number" min="1" placeholder="מס' כניסות (ריק=ללא הגבלה)">
       <input id="newPw" type="password" placeholder="סיסמה (אופציונלי)">
@@ -47,14 +46,7 @@
     </div>
 
     <h3>קישורים קיימים</h3>
-    <div class="table-wrap">
-    <table id="linksTable">
-      <thead><tr>
-        <th>slug</th><th>יעד</th><th>נוצר</th><th>הגבלה</th><th>קליקים</th><th>סיסמה</th><th></th>
-      </tr></thead>
-      <tbody id="linksBody"></tbody>
-    </table>
-    </div>
+    <div id="linksList"></div>
     <div id="saveMsg" class="msg"></div>
   </div>
 </div>
@@ -161,7 +153,7 @@ async function loadLinks() {
     document.getElementById("loginCard").style.display = "none";
     document.getElementById("manageCard").style.display = "block";
     document.getElementById("whoami").textContent = OWNER + "/" + REPO;
-    renderTable();
+    renderList();
   } catch (e) {
     setMsg("loginMsg", e.message, true);
   }
@@ -172,35 +164,64 @@ function fmtDate(iso) {
   try { return new Date(iso).toLocaleDateString("he-IL"); } catch (e) { return "-"; }
 }
 
-function renderTable() {
-  const body = document.getElementById("linksBody");
-  body.innerHTML = "";
+function renderList() {
+  const container = document.getElementById("linksList");
+  container.innerHTML = "";
   Object.keys(links).sort().forEach(slug => {
     const link = links[slug];
-    const tr = document.createElement("tr");
-    tr.id = "row-" + slug;
-    tr.innerHTML =
-      '<td>' + slug +
-        '<div><button class="secondary small" style="margin-top:4px" onclick="copyLink(\'' + slug + '\')">העתק קישור</button> ' +
-        '<button class="secondary small" style="margin-top:4px" onclick="toggleQr(\'' + slug + '\')">QR</button></div>' +
+    const shortUrl = OWNER + ".github.io/" + REPO + "/" + slug;
+    const item = document.createElement("div");
+    item.className = "link-item";
+    item.id = "row-" + slug;
+    item.innerHTML =
+      '<div class="link-header" onclick="toggleItem(\'' + slug + '\')">' +
+        '<span class="link-url">' + shortUrl + '</span>' +
+        '<span class="chevron">›</span>' +
+      '</div>' +
+      '<div class="link-body" style="display:none">' +
+        '<div>' +
+          '<span class="field-label">כתובת יעד</span>' +
+          '<input value="' + (link.url || "").replace(/"/g,'&quot;') + '" onchange="editUrl(\'' + slug + '\', this.value)">' +
+        '</div>' +
+        '<div class="field-row">' +
+          '<div style="flex:1"><span class="field-label">נוצר</span><div>' + fmtDate(link.created) + '</div></div>' +
+          '<div style="flex:1"><span class="field-label">קליקים</span><div class="clicks">...</div></div>' +
+        '</div>' +
+        '<div>' +
+          '<span class="field-label">הגבלת כניסות (ריק = ללא הגבלה)</span>' +
+          '<input class="small" type="number" min="1" value="' + (link.maxClicks || "") + '" onchange="editMax(\'' + slug + '\', this.value)">' +
+        '</div>' +
+        '<div>' +
+          '<span class="field-label">סיסמה</span>' +
+          '<div class="field-row" style="margin-bottom:6px">' +
+            '<span class="badge ' + (link.passwordHash ? 'on' : '') + '">' + (link.passwordHash ? 'מוגן' : 'ללא') + '</span>' +
+            (link.passwordHash ? '<button class="secondary small" onclick="clearPw(\'' + slug + '\')">הסר</button>' : '') +
+          '</div>' +
+          '<input type="password" placeholder="הגדר/החלף סיסמה" onchange="editPw(\'' + slug + '\', this.value)">' +
+        '</div>' +
         '<div class="qr-holder" data-shown="0"></div>' +
-      '</td>' +
-      '<td><input value="' + (link.url || "").replace(/"/g,'&quot;') + '" onchange="editUrl(\'' + slug + '\', this.value)"></td>' +
-      '<td>' + fmtDate(link.created) + '</td>' +
-      '<td><input class="small" type="number" min="1" value="' + (link.maxClicks || "") + '" placeholder="ללא" onchange="editMax(\'' + slug + '\', this.value)"></td>' +
-      '<td class="clicks">...</td>' +
-      '<td>' +
-        '<span class="badge ' + (link.passwordHash ? 'on' : '') + '">' + (link.passwordHash ? 'מוגן' : 'ללא') + '</span>' +
-        (link.passwordHash ? ' <button class="secondary small" onclick="clearPw(\'' + slug + '\')">הסר</button>' : '') +
-        '<input type="password" placeholder="הגדר/החלף סיסמה" style="margin-top:4px" onchange="editPw(\'' + slug + '\', this.value)">' +
-      '</td>' +
-      '<td class="row-actions"><button class="danger small" onclick="deleteLink(\'' + slug + '\')">מחק</button></td>';
-    body.appendChild(tr);
+        '<div class="field-row" id="actions-' + slug + '">' +
+          '<button class="secondary small" onclick="copyLink(\'' + slug + '\')">העתק קישור</button>' +
+          '<button class="secondary small" onclick="toggleQr(\'' + slug + '\')">QR</button>' +
+          '<button class="danger small" onclick="askDelete(\'' + slug + '\')">מחק</button>' +
+        '</div>' +
+      '</div>';
+    container.appendChild(item);
     getCount(slug).then(c => {
-      const cell = document.querySelector("#row-" + slug + " .clicks");
+      const cell = item.querySelector(".clicks");
       if (cell) cell.textContent = link.maxClicks ? (c + " / " + link.maxClicks) : c;
     });
   });
+}
+
+function toggleItem(slug) {
+  const item = document.getElementById("row-" + slug);
+  if (!item) return;
+  const body = item.querySelector(".link-body");
+  const header = item.querySelector(".link-header");
+  const isOpen = body.style.display !== "none";
+  body.style.display = isOpen ? "none" : "block";
+  header.classList.toggle("open", !isOpen);
 }
 
 function editUrl(slug, value) {
@@ -217,19 +238,27 @@ async function editPw(slug, value) {
   if (!value) return;
   links[slug].passwordHash = await sha256(value);
   saveLinks();
-  renderTable();
+  renderList();
 }
 
 function clearPw(slug) {
   links[slug].passwordHash = null;
   saveLinks();
-  renderTable();
+  renderList();
 }
 
-function deleteLink(slug) {
-  if (!confirm("למחוק את " + slug + "?")) return;
+function askDelete(slug) {
+  const cell = document.getElementById("actions-" + slug);
+  if (!cell) return;
+  cell.innerHTML =
+    '<span style="font-size:12px;color:var(--text-dim)">למחוק?</span> ' +
+    '<button class="danger small" onclick="confirmDelete(\'' + slug + '\')">כן, מחק</button> ' +
+    '<button class="secondary small" onclick="renderList()">ביטול</button>';
+}
+
+function confirmDelete(slug) {
   delete links[slug];
-  renderTable();
+  renderList();
   saveLinks();
 }
 
@@ -249,7 +278,7 @@ async function addLink() {
   document.getElementById("newUrl").value = "";
   document.getElementById("newMax").value = "";
   document.getElementById("newPw").value = "";
-  renderTable();
+  renderList();
   saveLinks();
 }
 

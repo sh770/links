@@ -102,9 +102,64 @@ button.danger{ background: var(--danger); }
 button.danger:hover{ background: var(--danger-hover); }
 button.small{ padding: 5px 10px; font-size: 13px; }
 
-/* ===== טבלה ===== */
+/* ===== רשימת קישורים מתקפלת (accordion) ===== */
+.link-item{
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.link-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 14px;
+  cursor: pointer;
+  gap: 10px;
+}
+.link-header .link-url{
+  direction: ltr;
+  unicode-bidi: plaintext;
+  text-align: left;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 13.5px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.link-header .chevron{
+  color: var(--text-dim);
+  flex: none;
+  transition: transform .15s ease;
+}
+.link-header.open .chevron{ transform: rotate(90deg); }
+.link-body{
+  padding: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.link-body input{ margin-bottom: 0; }
+.field-label{
+  display: block;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.field-row{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ===== טבלה (עדיין בשימוש במקומות אחרים) ===== */
 .table-wrap{ overflow-x: auto; -webkit-overflow-scrolling: touch; }
-table{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; min-width: 700px; }
+table{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
 td, th{ padding: 8px 6px; border-bottom: 1px solid var(--border); text-align: right; vertical-align: middle; color: var(--text); }
 th{ color: var(--text-dim); font-weight: 600; }
 .row-actions button{ margin-inline-start: 4px; }
