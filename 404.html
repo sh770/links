@@ -4,37 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>מפנה...</title>
-<style>
-  body{font-family:Arial,Helvetica,sans-serif;background:#111;color:#eee;
-       display:flex;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;box-sizing:border-box}
-  .box{text-align:center;max-width:340px}
-  .spinner{width:36px;height:36px;border:4px solid #333;border-top-color:#4ea1ff;
-           border-radius:50%;margin:0 auto 16px;animation:spin 1s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  a{color:#4ea1ff}
-  input{font-size:16px;padding:8px 10px;border-radius:6px;border:1px solid #444;
-        background:#222;color:#eee;width:100%;box-sizing:border-box;margin-top:12px}
-  button{margin-top:10px;padding:8px 16px;border-radius:6px;border:none;
-         background:#2563eb;color:#fff;font-size:14px;cursor:pointer}
-  .err{color:#f87171;font-size:13px;margin-top:8px}
-</style>
+<script>
+  // ===== הגדרה =====
+  const REPO_BASE = "/links/";
+  // חייב להיות זהה לקידומת ב-admin.html
+  const COUNTER_PREFIX = "sh770links_";
+
+  // טוען את style.css מהנתיב הנכון (לא ניתן להשתמש ב-<link> קבוע כי
+  // דף 404 מוגש עבור כתובות שונות, אז הנתיב היחסי לא תמיד נכון)
+  document.write('<link rel="stylesheet" href="' + (REPO_BASE || "/") + 'style.css">');
+</script>
 </head>
 <body>
-<div class="box">
-  <div class="spinner" id="spinner"></div>
-  <div id="msg">מפנה אותך...</div>
-  <div id="pwBox" style="display:none">
-    <input type="password" id="pwInput" placeholder="הזן סיסמה">
-    <button onclick="checkPassword()">המשך</button>
-    <div id="pwErr" class="err"></div>
+<div class="center-page">
+  <div class="box">
+    <div class="spinner" id="spinner"></div>
+    <div id="msg">מפנה אותך...</div>
+    <div id="pwBox" style="display:none">
+      <input type="password" id="pwInput" placeholder="הזן סיסמה" style="margin-top:12px">
+      <button onclick="checkPassword()">המשך</button>
+      <div id="pwErr" class="msg err"></div>
+    </div>
   </div>
 </div>
 
 <script>
-// ===== הגדרה =====
-const REPO_BASE = "/links/";
-// חייב להיות זהה לקידומת ב-admin.html
-const COUNTER_PREFIX = "sh770links_";
 const COUNTER_API = "https://countapi.mileshilliard.com/api/v1/";
 
 let currentLink = null;
@@ -66,17 +60,6 @@ async function getClickCount(slug) {
   }
 }
 
-async function getCountry() {
-  try {
-    const res = await fetch("https://api.country.is/");
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.country || null; // קוד מדינה בן 2 אותיות, למשל "IL"
-  } catch (e) {
-    return null; // כישלון בזיהוי - לא נחסום (fail-open), ראה README
-  }
-}
-
 async function hitAndRedirect() {
   document.getElementById("spinner").style.display = "block";
   document.getElementById("msg").textContent = "מפנה אותך...";
@@ -103,6 +86,7 @@ async function checkPassword() {
 async function redirect() {
   const slug = getSlug();
   currentSlug = slug;
+  const base = REPO_BASE || "/";
 
   if (!slug) {
     document.getElementById("spinner").style.display = "none";
@@ -112,7 +96,6 @@ async function redirect() {
 
   let links;
   try {
-    const base = REPO_BASE || "/";
     const res = await fetch(base + "links.json?_=" + Date.now());
     links = await res.json();
   } catch (e) {
@@ -122,7 +105,6 @@ async function redirect() {
   }
 
   const link = links[slug];
-  const base = REPO_BASE || "/";
   if (!link) {
     document.getElementById("spinner").style.display = "none";
     document.getElementById("msg").innerHTML =
@@ -139,17 +121,6 @@ async function redirect() {
         'הקישור <b>' + slug + '</b> פג תוקף (הגיע למספר הכניסות המותר).<br><a href="' + base + '">חזרה לדף הבית</a>';
       return;
     }
-  }
-
-  if (link.allowedCountries && link.allowedCountries.length) {
-    const country = await getCountry();
-    if (country && !link.allowedCountries.includes(country)) {
-      document.getElementById("spinner").style.display = "none";
-      document.getElementById("msg").innerHTML =
-        'הקישור <b>' + slug + '</b> אינו זמין באזור שלך.<br><a href="' + base + '">חזרה לדף הבית</a>';
-      return;
-    }
-    // אם הזיהוי נכשל (country === null) - ממשיכים בלי חסימה
   }
 
   if (link.passwordHash) {

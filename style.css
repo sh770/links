@@ -1,0 +1,166 @@
+:root{
+  --bg: #0e1015;
+  --surface: #171a21;
+  --surface-2: #1e222b;
+  --border: #2a2f3a;
+  --text: #e9ebf1;
+  --text-dim: #9aa1b0;
+  --accent: #5b7cfa;
+  --accent-hover: #4a68e0;
+  --danger: #e5626a;
+  --danger-hover: #d14a52;
+  --success: #4cd3a0;
+  --radius-lg: 18px;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+
+*{ box-sizing: border-box; }
+
+body{
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  margin: 0;
+}
+
+a{ color: var(--accent); }
+
+/* ===== פריסת עמוד ריכוזי (index, 404) ===== */
+.center-page{
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.box{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+.box h1{ font-size: 21px; margin: 0 0 8px; }
+.box p{ color: var(--text-dim); line-height: 1.6; font-size: 14.5px; margin: 8px 0; }
+
+/* ===== פריסת עמוד רחב (admin) ===== */
+.wrap{ max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+.wrap h1{ font-size: 21px; }
+
+.card{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 18px;
+}
+.card h3{ font-size: 15px; margin: 0 0 10px; color: var(--text); }
+
+.note{
+  font-size: 13px;
+  color: var(--text-dim);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-top: 10px;
+}
+
+/* ===== טפסים ===== */
+input, button{
+  font-family: var(--font);
+  font-size: 16px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+input{
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+}
+input::placeholder{ color: var(--text-dim); }
+input:focus{ outline: none; border-color: var(--accent); }
+
+button{
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+button:hover{ background: var(--accent-hover); }
+button.secondary{ background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+button.secondary:hover{ background: var(--border); }
+button.danger{ background: var(--danger); }
+button.danger:hover{ background: var(--danger-hover); }
+button.small{ padding: 5px 10px; font-size: 13px; }
+
+/* ===== טבלה ===== */
+.table-wrap{ overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; min-width: 700px; }
+td, th{ padding: 8px 6px; border-bottom: 1px solid var(--border); text-align: right; vertical-align: middle; color: var(--text); }
+th{ color: var(--text-dim); font-weight: 600; }
+.row-actions button{ margin-inline-start: 4px; }
+
+/* ===== רכיבים כלליים ===== */
+.badge{ font-size: 11px; padding: 3px 8px; border-radius: 999px; background: var(--surface-2); color: var(--text-dim); }
+.badge.on{ background: rgba(91,124,250,.18); color: var(--accent); }
+
+.msg{ font-size: 13px; margin-top: 8px; }
+.msg.err{ color: var(--danger); }
+.msg.ok{ color: var(--success); }
+
+.spinner{
+  width: 34px; height: 34px; margin: 0 auto 14px;
+  border: 4px solid var(--surface-2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin{ to{ transform: rotate(360deg); } }
+
+.btn-link{
+  display: inline-block;
+  margin-top: 14px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+}
+.btn-link:hover{ background: var(--accent-hover); }
+
+/* טוסט קטן להודעות זמניות (למשל "הועתק") */
+#toast{
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity .2s ease, transform .2s ease;
+  pointer-events: none;
+  z-index: 100;
+  max-width: 90vw;
+  text-align: center;
+}
+#toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===== מובייל ===== */
+@media (max-width: 600px){
+  .wrap{ padding: 14px 10px; }
+  .card{ padding: 14px; }
+}
