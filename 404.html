@@ -103,7 +103,11 @@ async function checkPassword() {
 
 function showDeadEnd(html) {
   const base = REPO_BASE || "/";
+<<<<<<< HEAD
   document.getElementById("box").style.display = "block";
+=======
+  document.getElementById("spinner").style.display = "none";
+>>>>>>> a769f0e6aece3b3ec14ee601b3a1f647e10515ee
   document.getElementById("msg").innerHTML =
     html + '<div style="margin-top:10px;font-size:13px;color:var(--text-dim)">מעביר אותך לדף הבית בעוד <span id="countdown">3</span>...</div>';
   let seconds = 3;
@@ -140,7 +144,11 @@ async function redirect() {
 
   const link = links[slug];
   if (!link) {
+<<<<<<< HEAD
     showDeadEnd('הקישור <b>' + escapeHtml(slug) + '</b> לא נמצא.');
+=======
+    showDeadEnd('הקישור <b>' + slug + '</b> לא נמצא.');
+>>>>>>> a769f0e6aece3b3ec14ee601b3a1f647e10515ee
     return;
   }
   currentLink = link;
@@ -148,7 +156,11 @@ async function redirect() {
   if (link.maxClicks) {
     const count = await getClickCount(slug);
     if (count >= link.maxClicks) {
+<<<<<<< HEAD
       showDeadEnd('הקישור <b>' + escapeHtml(slug) + '</b> פג תוקף (הגיע למספר הכניסות המותר).');
+=======
+      showDeadEnd('הקישור <b>' + slug + '</b> פג תוקף (הגיע למספר הכניסות המותר).');
+>>>>>>> a769f0e6aece3b3ec14ee601b3a1f647e10515ee
       return;
     }
   }
