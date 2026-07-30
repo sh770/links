@@ -14,7 +14,6 @@
     .addgrid{grid-template-columns:1fr}
     .addgrid button{width:100%}
   }
-  input.small{width:80px}
 </style>
 </head>
 <body>
@@ -39,7 +38,7 @@
     <div class="addgrid">
       <input id="newSlug" placeholder="כינוי (למשל: promo)">
       <input id="newUrl" placeholder="כתובת יעד מלאה (https://...)">
-      <input id="newMax" class="small" type="number" min="1" placeholder="מס' כניסות (ריק=ללא הגבלה)">
+      <input id="newMax" type="number" min="1" placeholder="מס' כניסות (ריק=ללא הגבלה)">
       <input id="newPw" type="password" placeholder="סיסמה (אופציונלי)">
       <button onclick="addLink()">הוסף</button>
     </div>
@@ -64,10 +63,21 @@ let sha = null;
 const COUNTER_PREFIX = "sh770links_";
 const COUNTER_API = "https://countapi.mileshilliard.com/api/v1/";
 
-// פרטי הריפו - קבועים, לא צריך להזין אותם בממשק
+// פרטי הריפו - נחוצים רק לקריאות ה-API של GitHub, לא משתנים כשמחברים
+// דומיין מותאם (הדומיין הוא רק "חזית" - הריפו האמיתי נשאר אותו דבר)
 const OWNER = "sh770";
 const REPO = "links";
-const SITE_URL = "https://" + OWNER + ".github.io/" + REPO + "/";
+
+// כתובת האתר הציבורי מזוהה אוטומטית מתוך הכתובת שבה admin.html רץ -
+// לא צריך לערוך את זה ידנית כשמחברים דומיין מותאם (Cloudflare וכו').
+function getBasePath() {
+  if (location.hostname.endsWith(".github.io")) {
+    const parts = location.pathname.split("/").filter(Boolean);
+    return parts.length ? ("/" + parts[0] + "/") : "/";
+  }
+  return "/";
+}
+const SITE_URL = location.origin + getBasePath();
 
 function api(path) {
   return "https://api.github.com/repos/" + OWNER + "/" + REPO + path;
@@ -82,6 +92,31 @@ function headers() {
 async function sha256(text) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// שלוש פונקציות הגנה מפני XSS - כל ערך דינמי (כינוי, כתובת יעד) עובר
+// דרכן לפני שהוא נכנס ל-HTML. בלי זה, כינוי עם תווים מיוחדים היה יכול
+// להריץ קוד בעמוד הניהול (ולפוטנציאלית לגנוב את הטוקן מ-localStorage).
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, ch => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[ch]));
+}
+function attrHtml(str) {
+  return String(str).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function attrJs(str) {
+  // בטוח להטמעה בתוך onclick="fn('...')"
+  return String(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+const SLUG_RE = /^[A-Za-z0-9_-]+$/;
+// כינויים אלה מתנגשים עם קבצי .html קיימים - GitHub Pages פותר כתובת
+// בלי סיומת (למשל /admin) ישירות לקובץ, במקום להעביר דרך מנגנון ההפניה.
+const RESERVED_SLUGS = ["admin", "index", "404"];
+function isValidSlug(s) {
+  return SLUG_RE.test(s) && !RESERVED_SLUGS.includes(s.toLowerCase());
 }
 
 async function getCount(slug) {
@@ -117,7 +152,8 @@ function copyLink(slug) {
 }
 
 function toggleQr(slug) {
-  const holder = document.querySelector("#row-" + slug + " .qr-holder");
+  const row = document.getElementById("row-" + slug);
+  const holder = row ? row.querySelector(".qr-holder") : null;
   if (!holder) return;
   if (holder.dataset.shown === "1") {
     holder.innerHTML = "";
@@ -172,23 +208,24 @@ function renderList() {
   container.innerHTML = "";
   Object.keys(links).sort().forEach(slug => {
     const link = links[slug];
-    const shortUrl = OWNER + ".github.io/" + REPO + "/" + slug;
+    const shortUrl = SITE_URL.replace(/^https?:\/\//, "") + slug;
+    const s = attrJs(slug); // גרסה בטוחה להטמעה בתוך onclick(...)
     const item = document.createElement("div");
     item.className = "link-item";
     item.id = "row-" + slug;
     item.innerHTML =
-      '<div class="link-header" onclick="toggleItem(\'' + slug + '\')">' +
-        '<span class="link-url">' + shortUrl + '</span>' +
+      '<div class="link-header" onclick="toggleItem(\'' + s + '\')">' +
+        '<span class="link-url">' + escapeHtml(shortUrl) + '</span>' +
         '<span class="chevron">›</span>' +
       '</div>' +
       '<div class="link-body" style="display:none">' +
         '<div>' +
           '<span class="field-label">כינוי (הנתיב בקישור)</span>' +
-          '<input value="' + slug.replace(/"/g,'&quot;') + '" onchange="renameSlug(\'' + slug + '\', this.value)">' +
+          '<input value="' + attrHtml(slug) + '" onchange="renameSlug(\'' + s + '\', this.value)">' +
         '</div>' +
         '<div>' +
           '<span class="field-label">כתובת יעד</span>' +
-          '<input value="' + (link.url || "").replace(/"/g,'&quot;') + '" onchange="editUrl(\'' + slug + '\', this.value)">' +
+          '<input value="' + attrHtml(link.url || "") + '" onchange="editUrl(\'' + s + '\', this.value)">' +
         '</div>' +
         '<div class="field-row">' +
           '<div style="flex:1"><span class="field-label">נוצר</span><div>' + fmtDate(link.created) + '</div></div>' +
@@ -196,21 +233,21 @@ function renderList() {
         '</div>' +
         '<div>' +
           '<span class="field-label">הגבלת כניסות (ריק = ללא הגבלה)</span>' +
-          '<input class="small" type="number" min="1" value="' + (link.maxClicks || "") + '" onchange="editMax(\'' + slug + '\', this.value)">' +
+          '<input type="number" min="1" value="' + (link.maxClicks || "") + '" onchange="editMax(\'' + s + '\', this.value)">' +
         '</div>' +
         '<div>' +
           '<span class="field-label">סיסמה</span>' +
           '<div class="field-row" style="margin-bottom:6px">' +
             '<span class="badge ' + (link.passwordHash ? 'on' : '') + '">' + (link.passwordHash ? 'מוגן' : 'ללא') + '</span>' +
-            (link.passwordHash ? '<button class="secondary small" onclick="clearPw(\'' + slug + '\')">הסר</button>' : '') +
+            (link.passwordHash ? '<button class="secondary small" onclick="clearPw(\'' + s + '\')">הסר</button>' : '') +
           '</div>' +
-          '<input type="password" placeholder="הגדר/החלף סיסמה" onchange="editPw(\'' + slug + '\', this.value)">' +
+          '<input type="password" placeholder="הגדר/החלף סיסמה" onchange="editPw(\'' + s + '\', this.value)">' +
         '</div>' +
         '<div class="qr-holder" data-shown="0"></div>' +
-        '<div class="field-row" id="actions-' + slug + '">' +
-          '<button class="secondary small" onclick="copyLink(\'' + slug + '\')">העתק קישור</button>' +
-          '<button class="secondary small" onclick="toggleQr(\'' + slug + '\')">QR</button>' +
-          '<button class="danger small" onclick="askDelete(\'' + slug + '\')">מחק</button>' +
+        '<div class="field-row" id="actions-' + attrHtml(slug) + '">' +
+          '<button class="secondary small" onclick="copyLink(\'' + s + '\')">העתק קישור</button>' +
+          '<button class="secondary small" onclick="toggleQr(\'' + s + '\')">QR</button>' +
+          '<button class="danger small" onclick="askDelete(\'' + s + '\')">מחק</button>' +
         '</div>' +
       '</div>';
     container.appendChild(item);
@@ -234,6 +271,16 @@ function toggleItem(slug) {
 function renameSlug(oldSlug, newSlugRaw) {
   const newSlug = newSlugRaw.trim();
   if (!newSlug || newSlug === oldSlug) {
+    renderList();
+    return;
+  }
+  if (RESERVED_SLUGS.includes(newSlug.toLowerCase())) {
+    toast('הכינוי "' + newSlug + '" שמור לשימוש המערכת (מתנגש עם דף קיים)');
+    renderList();
+    return;
+  }
+  if (!isValidSlug(newSlug)) {
+    toast("כינוי יכול להכיל רק אותיות/ספרות באנגלית, מקף וקו תחתון");
     renderList();
     return;
   }
@@ -275,9 +322,10 @@ function clearPw(slug) {
 function askDelete(slug) {
   const cell = document.getElementById("actions-" + slug);
   if (!cell) return;
+  const s = attrJs(slug);
   cell.innerHTML =
     '<span style="font-size:12px;color:var(--text-dim)">למחוק?</span> ' +
-    '<button class="danger small" onclick="confirmDelete(\'' + slug + '\')">כן, מחק</button> ' +
+    '<button class="danger small" onclick="confirmDelete(\'' + s + '\')">כן, מחק</button> ' +
     '<button class="secondary small" onclick="renderList()">ביטול</button>';
 }
 
@@ -293,6 +341,18 @@ async function addLink() {
   const max = document.getElementById("newMax").value.trim();
   const pw = document.getElementById("newPw").value;
   if (!slug || !url) return;
+  if (RESERVED_SLUGS.includes(slug.toLowerCase())) {
+    toast('הכינוי "' + slug + '" שמור לשימוש המערכת (מתנגש עם דף קיים)');
+    return;
+  }
+  if (!isValidSlug(slug)) {
+    toast("כינוי יכול להכיל רק אותיות/ספרות באנגלית, מקף וקו תחתון");
+    return;
+  }
+  if (links[slug]) {
+    toast('הכינוי "' + slug + '" כבר תפוס');
+    return;
+  }
   links[slug] = {
     url: url,
     created: new Date().toISOString(),

@@ -6,7 +6,18 @@
 <title>מפנה...</title>
 <script>
   // ===== הגדרה =====
-  const REPO_BASE = "/links/";
+  // נתיב הבסיס מזוהה אוטומטית לפי הכתובת שבה הדף רץ - לא צריך לערוך
+  // את זה ידנית, גם אם תחבר בעתיד דומיין מותאם (Cloudflare וכו').
+  // ב-username.github.io/reponame/... הנתיב הוא "/reponame/".
+  // בדומיין מותאם (לא github.io) האתר תמיד מוגש מהשורש, אז "/".
+  function getBasePath() {
+    if (location.hostname.endsWith(".github.io")) {
+      const parts = location.pathname.split("/").filter(Boolean);
+      return parts.length ? ("/" + parts[0] + "/") : "/";
+    }
+    return "/";
+  }
+  const REPO_BASE = getBasePath();
   // חייב להיות זהה לקידומת ב-admin.html
   const COUNTER_PREFIX = "sh770links_";
 
@@ -19,9 +30,9 @@
 </head>
 <body>
 <div class="center-page">
-  <div class="box">
-    <div class="spinner" id="spinner"></div>
-    <div id="msg">מפנה אותך...</div>
+  <div class="box" id="box" style="display:none">
+    <div class="spinner" id="spinner" style="display:none"></div>
+    <div id="msg"></div>
     <div id="pwBox" style="display:none">
       <input type="password" id="pwInput" placeholder="הזן סיסמה" style="margin-top:12px">
       <button onclick="checkPassword()">המשך</button>
@@ -39,6 +50,14 @@ let currentSlug = null;
 async function sha256(text) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// מונע הזרקת HTML/JS דרך הכינוי (שמגיע ישירות מה-URL, ולכן לא אמין) -
+// בלי זה, קישור מעוצב בזדון היה יכול להריץ קוד בדפדפן של כל מבקר.
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, ch => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[ch]));
 }
 
 function getSlug() {
@@ -63,9 +82,6 @@ async function getClickCount(slug) {
 }
 
 async function hitAndRedirect() {
-  document.getElementById("spinner").style.display = "block";
-  document.getElementById("msg").textContent = "מפנה אותך...";
-  document.getElementById("pwBox").style.display = "none";
   try {
     await Promise.race([
       fetch(COUNTER_API + "hit/" + encodeURIComponent(COUNTER_PREFIX + currentSlug)),
@@ -85,14 +101,30 @@ async function checkPassword() {
   }
 }
 
+function showDeadEnd(html) {
+  const base = REPO_BASE || "/";
+  document.getElementById("box").style.display = "block";
+  document.getElementById("msg").innerHTML =
+    html + '<div style="margin-top:10px;font-size:13px;color:var(--text-dim)">מעביר אותך לדף הבית בעוד <span id="countdown">3</span>...</div>';
+  let seconds = 3;
+  const timer = setInterval(() => {
+    seconds -= 1;
+    const el = document.getElementById("countdown");
+    if (el) el.textContent = seconds;
+    if (seconds <= 0) {
+      clearInterval(timer);
+      location.replace(base);
+    }
+  }, 1000);
+}
+
 async function redirect() {
   const slug = getSlug();
   currentSlug = slug;
   const base = REPO_BASE || "/";
 
   if (!slug) {
-    document.getElementById("spinner").style.display = "none";
-    document.getElementById("msg").innerHTML = "לא צוין קישור.";
+    showDeadEnd("לא צוין קישור.");
     return;
   }
 
@@ -101,16 +133,14 @@ async function redirect() {
     const res = await fetch(base + "links.json?_=" + Date.now());
     links = await res.json();
   } catch (e) {
-    document.getElementById("spinner").style.display = "none";
-    document.getElementById("msg").innerHTML = "שגיאה בטעינת מסד הקישורים.";
+    document.getElementById("box").style.display = "block";
+    document.getElementById("msg").textContent = "שגיאה בטעינת מסד הקישורים.";
     return;
   }
 
   const link = links[slug];
   if (!link) {
-    document.getElementById("spinner").style.display = "none";
-    document.getElementById("msg").innerHTML =
-      'הקישור <b>' + slug + '</b> לא נמצא.<br><a href="' + base + '">חזרה לדף הבית</a>';
+    showDeadEnd('הקישור <b>' + escapeHtml(slug) + '</b> לא נמצא.');
     return;
   }
   currentLink = link;
@@ -118,15 +148,13 @@ async function redirect() {
   if (link.maxClicks) {
     const count = await getClickCount(slug);
     if (count >= link.maxClicks) {
-      document.getElementById("spinner").style.display = "none";
-      document.getElementById("msg").innerHTML =
-        'הקישור <b>' + slug + '</b> פג תוקף (הגיע למספר הכניסות המותר).<br><a href="' + base + '">חזרה לדף הבית</a>';
+      showDeadEnd('הקישור <b>' + escapeHtml(slug) + '</b> פג תוקף (הגיע למספר הכניסות המותר).');
       return;
     }
   }
 
   if (link.passwordHash) {
-    document.getElementById("spinner").style.display = "none";
+    document.getElementById("box").style.display = "block";
     document.getElementById("msg").textContent = "הקישור הזה מוגן בסיסמה.";
     document.getElementById("pwBox").style.display = "block";
     return;
