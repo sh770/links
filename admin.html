@@ -14,7 +14,6 @@
     .addgrid{grid-template-columns:1fr}
     .addgrid button{width:100%}
   }
-  input.small{width:80px}
 </style>
 </head>
 <body>
@@ -39,7 +38,7 @@
     <div class="addgrid">
       <input id="newSlug" placeholder="כינוי (למשל: promo)">
       <input id="newUrl" placeholder="כתובת יעד מלאה (https://...)">
-      <input id="newMax" class="small" type="number" min="1" placeholder="מס' כניסות (ריק=ללא הגבלה)">
+      <input id="newMax" type="number" min="1" placeholder="מס' כניסות (ריק=ללא הגבלה)">
       <input id="newPw" type="password" placeholder="סיסמה (אופציונלי)">
       <button onclick="addLink()">הוסף</button>
     </div>
@@ -196,7 +195,7 @@ function renderList() {
         '</div>' +
         '<div>' +
           '<span class="field-label">הגבלת כניסות (ריק = ללא הגבלה)</span>' +
-          '<input class="small" type="number" min="1" value="' + (link.maxClicks || "") + '" onchange="editMax(\'' + slug + '\', this.value)">' +
+          '<input type="number" min="1" value="' + (link.maxClicks || "") + '" onchange="editMax(\'' + slug + '\', this.value)">' +
         '</div>' +
         '<div>' +
           '<span class="field-label">סיסמה</span>' +
