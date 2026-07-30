@@ -85,14 +85,30 @@ async function checkPassword() {
   }
 }
 
+function showDeadEnd(html) {
+  const base = REPO_BASE || "/";
+  document.getElementById("spinner").style.display = "none";
+  document.getElementById("msg").innerHTML =
+    html + '<div style="margin-top:10px;font-size:13px;color:var(--text-dim)">מעביר אותך לדף הבית בעוד <span id="countdown">3</span>...</div>';
+  let seconds = 3;
+  const timer = setInterval(() => {
+    seconds -= 1;
+    const el = document.getElementById("countdown");
+    if (el) el.textContent = seconds;
+    if (seconds <= 0) {
+      clearInterval(timer);
+      location.replace(base);
+    }
+  }, 1000);
+}
+
 async function redirect() {
   const slug = getSlug();
   currentSlug = slug;
   const base = REPO_BASE || "/";
 
   if (!slug) {
-    document.getElementById("spinner").style.display = "none";
-    document.getElementById("msg").innerHTML = "לא צוין קישור.";
+    showDeadEnd("לא צוין קישור.");
     return;
   }
 
@@ -108,9 +124,7 @@ async function redirect() {
 
   const link = links[slug];
   if (!link) {
-    document.getElementById("spinner").style.display = "none";
-    document.getElementById("msg").innerHTML =
-      'הקישור <b>' + slug + '</b> לא נמצא.<br><a href="' + base + '">חזרה לדף הבית</a>';
+    showDeadEnd('הקישור <b>' + slug + '</b> לא נמצא.');
     return;
   }
   currentLink = link;
@@ -118,9 +132,7 @@ async function redirect() {
   if (link.maxClicks) {
     const count = await getClickCount(slug);
     if (count >= link.maxClicks) {
-      document.getElementById("spinner").style.display = "none";
-      document.getElementById("msg").innerHTML =
-        'הקישור <b>' + slug + '</b> פג תוקף (הגיע למספר הכניסות המותר).<br><a href="' + base + '">חזרה לדף הבית</a>';
+      showDeadEnd('הקישור <b>' + slug + '</b> פג תוקף (הגיע למספר הכניסות המותר).');
       return;
     }
   }
