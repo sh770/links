@@ -11,6 +11,62 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
 <link rel="stylesheet" href="style.css">
+
+<style>
+  .card {
+    text-align: center;
+  }
+  .card p {
+    margin: 12px 0;
+    word-break: break-all;
+    line-height: 1.5;
+  }
+  .card strong {
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  .card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  .card-actions .btn-link {
+    margin-top: 0;
+    padding: 9px 16px;
+    font-size: 13.5px;
+    border-radius: 10px;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* כפתורי פתיחה (ראשיים) */
+  .card-actions .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .card-actions .btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+  }
+
+  /* כפתורי העתקה (משניים) */
+  .card-actions .btn-secondary {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .card-actions .btn-secondary:hover {
+    background: var(--border);
+    border-color: #3a4050;
+    transform: translateY(-1px);
+  }
+</style>
 </head>
 
 <body>
@@ -41,7 +97,6 @@
 
 async function loadLinks(){
 
-    // מונע קריאה מה-cache
     const response = await fetch("links.json?t=" + Date.now(), {
         cache: "no-store"
     });
@@ -83,9 +138,9 @@ async function loadLinks(){
             var card = document.createElement("div");
             card.className = "card";
 
-            // קישור מקוצר מלא
+            // קישור מקוצר
             var pShort = document.createElement("p");
-            pShort.innerHTML = "<strong>קישור מקוצר:</strong><br>";
+            pShort.innerHTML = "<strong>קישור מקוצר</strong><br>";
             var spanShort = document.createElement("span");
             spanShort.textContent = shortUrl;
             pShort.appendChild(spanShort);
@@ -93,42 +148,61 @@ async function loadLinks(){
 
             // יעד
             var pTarget = document.createElement("p");
-            pTarget.innerHTML = "<strong>יעד:</strong><br>";
+            pTarget.innerHTML = "<strong>יעד</strong><br>";
             var spanTarget = document.createElement("span");
             spanTarget.textContent = value.url;
             pTarget.appendChild(spanTarget);
             card.appendChild(pTarget);
 
-            // כפתור פתח קישור
+            // כפתורים
+            var actions = document.createElement("div");
+            actions.className = "card-actions";
+
+            // פתח קישור
             var btnShort = document.createElement("a");
-            btnShort.className = "btn-link";
+            btnShort.className = "btn-link btn-primary";
             btnShort.href = shortUrl;
             btnShort.target = "_blank";
-            btnShort.textContent = "פתח קישור";
-            card.appendChild(btnShort);
+            btnShort.textContent = "🔗 פתח קישור";
+            actions.appendChild(btnShort);
 
-            // כפתור פתח יעד
+            // פתח יעד
             var btnTarget = document.createElement("a");
-            btnTarget.className = "btn-link";
+            btnTarget.className = "btn-link btn-primary";
             btnTarget.href = value.url;
             btnTarget.target = "_blank";
-            btnTarget.textContent = "פתח יעד";
-            card.appendChild(btnTarget);
+            btnTarget.textContent = "🌐 פתח יעד";
+            actions.appendChild(btnTarget);
 
-            // כפתור העתק יעד
+            // העתק מקוצר
+            var btnCopyShort = document.createElement("a");
+            btnCopyShort.className = "btn-link btn-secondary";
+            btnCopyShort.href = "#";
+            btnCopyShort.textContent = "📋 העתק מקוצר";
+            btnCopyShort.onclick = (function(url){
+                return function(e){
+                    e.preventDefault();
+                    navigator.clipboard.writeText(url);
+                    showToast("הקישור המקוצר הועתק");
+                };
+            })(shortUrl);
+            actions.appendChild(btnCopyShort);
+
+            // העתק יעד
             var btnCopy = document.createElement("a");
-            btnCopy.className = "btn-link";
+            btnCopy.className = "btn-link btn-secondary";
             btnCopy.href = "#";
-            btnCopy.textContent = "העתק יעד";
+            btnCopy.textContent = "📋 העתק יעד";
             btnCopy.onclick = (function(url){
                 return function(e){
                     e.preventDefault();
                     navigator.clipboard.writeText(url);
-                    showToast("הועתק");
+                    showToast("היעד הועתק");
                 };
             })(value.url);
-            card.appendChild(btnCopy);
+            actions.appendChild(btnCopy);
 
+            card.appendChild(actions);
             container.appendChild(card);
         }
     }
