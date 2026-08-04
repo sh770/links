@@ -77,17 +77,11 @@ async function loadLinks(){
             var key = list[i][0];
             var value = list[i][1];
 
-            // הנתיב הנכון של הקישור המקוצר
             var shortPath = "/links/" + key;
             var shortUrl = location.origin + shortPath;
 
             var card = document.createElement("div");
             card.className = "card";
-
-            // כותרת
-            var title = document.createElement("h3");
-            title.textContent = shortPath;
-            card.appendChild(title);
 
             // קישור מקוצר מלא
             var pShort = document.createElement("p");
