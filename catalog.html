@@ -41,7 +41,11 @@
 
 async function loadLinks(){
 
-    const response = await fetch("links.json");
+    // מונע קריאה מה-cache
+    const response = await fetch(`links.json?t=${Date.now()}`, {
+        cache: "no-store"
+    });
+
     const json = await response.json();
 
     const entries = Object.entries(json);
@@ -68,18 +72,20 @@ async function loadLinks(){
 
         for(const [key,value] of list){
 
+            const shortUrl = `\( {location.origin}/ \){key}`;
+
             const card=document.createElement("div");
 
             card.className="card";
 
             card.innerHTML=`
 
-                <h3>/${key}</h3>
+                <h3>${shortUrl}</h3>
 
                 <p><strong>יעד:</strong><br>${value.url}</p>
 
                 <a class="btn-link"
-                   href="/${key}"
+                   href="${shortUrl}"
                    target="_blank">
                    פתח קישור
                 </a>
