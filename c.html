@@ -42,7 +42,7 @@
 async function loadLinks(){
 
     // מונע קריאה מה-cache
-    const response = await fetch(`links.json?t=${Date.now()}`, {
+    const response = await fetch("links.json?t=" + Date.now(), {
         cache: "no-store"
     });
 
@@ -53,58 +53,68 @@ async function loadLinks(){
     const counter = document.getElementById("count");
     const search = document.getElementById("search");
 
-    function render(filter = ""){
+    function render(filter){
+
+        if (!filter) filter = "";
 
         container.innerHTML = "";
 
-        const list = entries.filter(([key, value]) => {
-            const text = (key + " " + value.url).toLowerCase();
-            return text.includes(filter.toLowerCase());
+        const list = entries.filter(function(item){
+            var key = item[0];
+            var value = item[1];
+            var text = (key + " " + value.url).toLowerCase();
+            return text.indexOf(filter.toLowerCase()) !== -1;
         });
 
-        counter.textContent = `${list.length} קישורים`;
+        counter.textContent = list.length + " קישורים";
 
-        list.sort((a, b) => a[0].localeCompare(b[0]));
+        list.sort(function(a, b){
+            return a[0].localeCompare(b[0]);
+        });
 
-        for (const [key, value] of list){
+        for (var i = 0; i < list.length; i++){
 
-            const shortPath = `/${key}`;
-            const shortUrl  = `\( {location.origin} \){shortPath}`;
+            var key = list[i][0];
+            var value = list[i][1];
 
-            const card = document.createElement("div");
+            // הנתיב הנכון של הקישור המקוצר
+            var shortPath = "/links/" + key;
+            var shortUrl = location.origin + shortPath;
+
+            var card = document.createElement("div");
             card.className = "card";
 
-            // כותרת - הנתיב הקצר
-            const title = document.createElement("h3");
+            // כותרת
+            var title = document.createElement("h3");
             title.textContent = shortPath;
             card.appendChild(title);
 
-            // כתובת מלאה של הקישור המקוצר
-            const fullShort = document.createElement("p");
-            fullShort.innerHTML = `<strong>קישור מקוצר:</strong><br>`;
-            const shortLinkText = document.createElement("span");
-            shortLinkText.textContent = shortUrl;
-            fullShort.appendChild(shortLinkText);
-            card.appendChild(fullShort);
+            // קישור מקוצר מלא
+            var pShort = document.createElement("p");
+            pShort.innerHTML = "<strong>קישור מקוצר:</strong><br>";
+            var spanShort = document.createElement("span");
+            spanShort.textContent = shortUrl;
+            pShort.appendChild(spanShort);
+            card.appendChild(pShort);
 
-            // כתובת היעד
-            const target = document.createElement("p");
-            target.innerHTML = `<strong>יעד:</strong><br>`;
-            const targetText = document.createElement("span");
-            targetText.textContent = value.url;
-            target.appendChild(targetText);
-            card.appendChild(target);
+            // יעד
+            var pTarget = document.createElement("p");
+            pTarget.innerHTML = "<strong>יעד:</strong><br>";
+            var spanTarget = document.createElement("span");
+            spanTarget.textContent = value.url;
+            pTarget.appendChild(spanTarget);
+            card.appendChild(pTarget);
 
-            // כפתור פתח קישור מקוצר
-            const btnShort = document.createElement("a");
+            // כפתור פתח קישור
+            var btnShort = document.createElement("a");
             btnShort.className = "btn-link";
-            btnShort.href = shortPath;
+            btnShort.href = shortUrl;
             btnShort.target = "_blank";
             btnShort.textContent = "פתח קישור";
             card.appendChild(btnShort);
 
             // כפתור פתח יעד
-            const btnTarget = document.createElement("a");
+            var btnTarget = document.createElement("a");
             btnTarget.className = "btn-link";
             btnTarget.href = value.url;
             btnTarget.target = "_blank";
@@ -112,30 +122,35 @@ async function loadLinks(){
             card.appendChild(btnTarget);
 
             // כפתור העתק יעד
-            const btnCopy = document.createElement("a");
-            btnCopy.className = "btn-link copy";
+            var btnCopy = document.createElement("a");
+            btnCopy.className = "btn-link";
             btnCopy.href = "#";
             btnCopy.textContent = "העתק יעד";
-            btnCopy.onclick = (e) => {
-                e.preventDefault();
-                navigator.clipboard.writeText(value.url);
-                showToast("הועתק");
-            };
+            btnCopy.onclick = (function(url){
+                return function(e){
+                    e.preventDefault();
+                    navigator.clipboard.writeText(url);
+                    showToast("הועתק");
+                };
+            })(value.url);
             card.appendChild(btnCopy);
 
             container.appendChild(card);
         }
     }
 
-    search.oninput = () => render(search.value);
+    search.oninput = function(){
+        render(search.value);
+    };
+
     render();
 }
 
 function showToast(text){
-    const toast = document.getElementById("toast");
+    var toast = document.getElementById("toast");
     toast.textContent = text;
     toast.classList.add("show");
-    setTimeout(() => {
+    setTimeout(function(){
         toast.classList.remove("show");
     }, 1500);
 }
