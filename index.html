@@ -8,18 +8,166 @@
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
+<style>
+  .top-bar{ text-align:center; padding:14px 16px 0; }
+  .wrap{ text-align:center; }
+  .wrap h1{ margin-bottom:8px; }
+  .intro{ display:inline-block; text-align:center; max-width:100%; color:var(--text-dim); font-size:14.5px; line-height:1.6; }
+  #search{ max-width:360px; margin:16px auto 8px; display:block; text-align:center; }
+  #count{ margin:8px 0 20px; color:var(--text-dim); }
+  .card{ text-align:center; }
+  .card p{ margin:12px 0; word-break:break-all; line-height:1.5; }
+  .card strong{ color:var(--text-dim); font-size:13px; }
+  .card-actions{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:18px; }
+  .card-actions .btn-link{
+    margin-top:0; padding:9px 16px; font-size:13.5px; border-radius:10px;
+    transition: all .15s ease; display:inline-flex; align-items:center; gap:6px;
+  }
+  .card-actions .btn-primary{ background:var(--accent); color:#fff; }
+  .card-actions .btn-primary:hover{ background:var(--accent-hover); transform:translateY(-1px); }
+  .card-actions .btn-secondary{ background:var(--surface-2); color:var(--text); border:1px solid var(--border); }
+  .card-actions .btn-secondary:hover{ background:var(--border); border-color:#3a4050; transform:translateY(-1px); }
+</style>
 </head>
 <body>
-<div class="center-page">
-  <div class="box">
-    <h1>🔗 מקצר קישורים</h1>
-    <p>
-      האתר הזה מייצר קישורים קצרים שמפנים לכתובות יעד.
-      כל קישור בנוי מהכתובת הזו + כינוי קצר בסופה.
-    </p>
-    <p>אם הגעת לכאן בלי כינוי - כנראה שאתה מחפש את דף הניהול.</p>
-    <a class="btn-link" href="admin">לדף הניהול</a>
-  </div>
+<div class="top-bar">
+  <a class="btn-link" href="admin">לדף הניהול</a>
 </div>
+
+<div class="wrap">
+  <h1>🔗 מקצר קישורים</h1>
+  <div class="intro">
+    האתר הזה מייצר קישורים קצרים שמפנים לכתובות יעד.
+    כל קישור בנוי מהכתובת הזו + כינוי קצר בסופה.
+  </div>
+  <input id="search" type="text" placeholder="חיפוש...">
+  <p id="count"></p>
+  <div id="links"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// זיהוי אוטומטי של נתיב הבסיס - אותה שיטה כמו ב-404.html וב-admin.html,
+// כדי שהקישורים המוצגים יהיו נכונים גם עם דומיין מותאם.
+function getBasePath() {
+  if (location.hostname.endsWith(".github.io")) {
+    const parts = location.pathname.split("/").filter(Boolean);
+    return parts.length ? ("/" + parts[0] + "/") : "/";
+  }
+  return "/";
+}
+const BASE = getBasePath();
+
+async function loadLinks() {
+  const response = await fetch(BASE + "links.json?t=" + Date.now(), { cache: "no-store" });
+  const json = await response.json();
+  const entries = Object.entries(json);
+
+  const container = document.getElementById("links");
+  const counter = document.getElementById("count");
+  const search = document.getElementById("search");
+
+  function render(filter) {
+    if (!filter) filter = "";
+    container.innerHTML = "";
+
+    const list = entries.filter(item => {
+      const key = item[0];
+      const value = item[1];
+      const text = (key + " " + (value.passwordHash ? "" : value.url)).toLowerCase();
+      return text.indexOf(filter.toLowerCase()) !== -1;
+    });
+
+    counter.textContent = list.length + " קישורים";
+    list.sort((a, b) => a[0].localeCompare(b[0]));
+
+    list.forEach(([key, value]) => {
+      const shortUrl = location.origin + BASE + key;
+      const protectedLink = !!value.passwordHash;
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      // קישור מקוצר
+      const pShort = document.createElement("p");
+      pShort.innerHTML = "<strong>קישור מקוצר</strong><br>";
+      const spanShort = document.createElement("span");
+      spanShort.textContent = shortUrl;
+      pShort.appendChild(spanShort);
+      card.appendChild(pShort);
+
+      // יעד - מוסתר אם הקישור מוגן בסיסמה, כדי לא לעקוף את ההגנה
+      const pTarget = document.createElement("p");
+      pTarget.innerHTML = "<strong>יעד</strong><br>";
+      const spanTarget = document.createElement("span");
+      spanTarget.textContent = protectedLink ? "🔒 מוגן בסיסמה" : value.url;
+      pTarget.appendChild(spanTarget);
+      card.appendChild(pTarget);
+
+      const actions = document.createElement("div");
+      actions.className = "card-actions";
+
+      const btnShort = document.createElement("a");
+      btnShort.className = "btn-link btn-primary";
+      btnShort.href = shortUrl;
+      btnShort.target = "_blank";
+      btnShort.rel = "noopener";
+      btnShort.textContent = "🔗 פתח קישור";
+      actions.appendChild(btnShort);
+
+      // "פתח יעד" / "העתק יעד" מוצגים רק אם הקישור לא מוגן בסיסמה
+      if (!protectedLink) {
+        const btnTarget = document.createElement("a");
+        btnTarget.className = "btn-link btn-primary";
+        btnTarget.href = value.url;
+        btnTarget.target = "_blank";
+        btnTarget.rel = "noopener";
+        btnTarget.textContent = "🌐 פתח יעד";
+        actions.appendChild(btnTarget);
+      }
+
+      const btnCopyShort = document.createElement("a");
+      btnCopyShort.className = "btn-link btn-secondary";
+      btnCopyShort.href = "#";
+      btnCopyShort.textContent = "📋 העתק מקוצר";
+      btnCopyShort.onclick = e => {
+        e.preventDefault();
+        navigator.clipboard.writeText(shortUrl);
+        showToast("הקישור המקוצר הועתק");
+      };
+      actions.appendChild(btnCopyShort);
+
+      if (!protectedLink) {
+        const btnCopy = document.createElement("a");
+        btnCopy.className = "btn-link btn-secondary";
+        btnCopy.href = "#";
+        btnCopy.textContent = "📋 העתק יעד";
+        btnCopy.onclick = e => {
+          e.preventDefault();
+          navigator.clipboard.writeText(value.url);
+          showToast("היעד הועתק");
+        };
+        actions.appendChild(btnCopy);
+      }
+
+      card.appendChild(actions);
+      container.appendChild(card);
+    });
+  }
+
+  search.oninput = () => render(search.value);
+  render();
+}
+
+function showToast(text) {
+  const toast = document.getElementById("toast");
+  toast.textContent = text;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1500);
+}
+
+loadLinks();
+</script>
 </body>
 </html>

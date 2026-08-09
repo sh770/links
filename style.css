@@ -192,6 +192,8 @@ th{ color: var(--text-dim); font-weight: 600; }
   font-size: 14px;
 }
 .btn-link:hover{ background: var(--accent-hover); }
+.btn-link.secondary{ background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+.btn-link.secondary:hover{ background: var(--border); }
 
 /* טוסט קטן להודעות זמניות (למשל "הועתק") */
 #toast{
