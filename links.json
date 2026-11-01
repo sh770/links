@@ -51,6 +51,7 @@
     "created": "2026-10-31T22:15:13.341Z",
     "maxClicks": null,
     "passwordHash": null,
-    "title": "בחירת יום להנצחה"
+    "title": "בחירת יום להנצחה",
+    "hidden": true
   }
 }
