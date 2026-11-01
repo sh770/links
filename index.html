@@ -1,56 +1,111 @@
+
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>מקצר קישורים</title>
+
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
+
 <style>
-  .top-bar{ text-align:center; padding:14px 16px 0; }
-  .wrap{ text-align:center; }
-  .wrap h1{ margin-bottom:8px; }
-  .intro{ display:inline-block; text-align:center; max-width:100%; color:var(--text-dim); font-size:14.5px; line-height:1.6; }
-  #search{ max-width:360px; margin:16px auto 8px; display:block; text-align:center; }
-  #count{ margin:8px 0 20px; color:var(--text-dim); }
-  .card{ text-align:center; }
-  .card-title{ margin:0 0 6px; font-size:17px; color:var(--text); word-break:break-word; }
-  .card p{ margin:12px 0; word-break:break-all; line-height:1.5; }
-  .card strong{ color:var(--text-dim); font-size:13px; }
-  .card-actions{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:18px; }
-  .card-actions .btn-link{
-    margin-top:0; padding:12px 20px; font-size:15px; border-radius:12px;
-    transition: all .15s ease; display:inline-flex; align-items:center; gap:6px;
+  /* עיצוב ייחודי לדף הבית */
+  .top-bar {
+    text-align: center;
+    padding: 14px 16px 0;
   }
-  .card-actions .btn-primary{ background:var(--accent); color:#fff; }
-  .card-actions .btn-primary:hover{ background:var(--accent-hover); transform:translateY(-1px); }
-  .card-actions .btn-secondary{ background:var(--surface-2); color:var(--text); border:1px solid var(--border); }
-  .card-actions .btn-secondary:hover{ background:var(--border); border-color:#3a4050; transform:translateY(-1px); }
+
+  .wrap {
+    text-align: center;
+  }
+
+  .wrap h1 {
+    margin-bottom: 8px;
+  }
+
+  .intro {
+    display: inline-block;
+    text-align: center;
+    max-width: 100%;
+    color: var(--text-dim);
+    font-size: 14.5px;
+    line-height: 1.6;
+  }
+
+  /* שדה החיפוש */
+  #search {
+    max-width: 360px;
+    margin: 16px auto 8px;
+    display: block;
+    text-align: center;
+  }
+
+  /* מונה הקישורים */
+  #count {
+    margin: 8px 0 20px;
+    color: var(--text-dim);
+  }
+
+  /* עיצוב תוכן הכרטיס */
+  .card {
+    text-align: center;
+  }
+
+  .card-title {
+    margin: 0 0 6px;
+    font-size: 17px;
+    color: var(--text);
+    word-break: break-word;
+  }
+
+  .card p {
+    margin: 12px 0;
+    word-break: break-all;
+    line-height: 1.5;
+  }
+
+  .card strong {
+    color: var(--text-dim);
+    font-size: 13px;
+  }
 </style>
 </head>
+
 <body>
+
+<!-- קישור לעמוד הניהול -->
 <div class="top-bar">
   <a class="btn-link" href="admin">לדף הניהול</a>
 </div>
 
+<!-- אזור הכותרת והחיפוש -->
 <div class="wrap">
+
   <h1>🔗 מקצר קישורים</h1>
+
   <div class="intro">
     האתר הזה מייצר קישורים קצרים שמפנים לכתובות יעד.
     כל קישור בנוי מהכתובת הזו + כינוי קצר בסופה.
   </div>
+
   <input id="search" type="text" placeholder="חיפוש...">
+
   <p id="count"></p>
+
+  <!-- כאן יוצגו כרטיסי הקישורים -->
   <div id="links"></div>
+
 </div>
 
+<!-- הודעות זמניות למשתמש -->
 <div id="toast"></div>
 
 <script>
-// זיהוי אוטומטי של נתיב הבסיס - אותה שיטה כמו ב-404.html וב-admin.html,
-// כדי שהקישורים המוצגים יהיו נכונים גם עם דומיין מותאם.
+
+// זיהוי אוטומטי של נתיב הבסיס
 function getBasePath() {
   if (location.hostname.endsWith(".github.io")) {
     const parts = location.pathname.split("/").filter(Boolean);
@@ -58,40 +113,79 @@ function getBasePath() {
   }
   return "/";
 }
+
+// שמירת נתיב הבסיס
 const BASE = getBasePath();
 
+// טעינת הקישורים מקובץ JSON
 async function loadLinks() {
-  const response = await fetch(BASE + "links.json?t=" + Date.now(), { cache: "no-store" });
+
+  // טעינת הקובץ ללא שימוש במטמון
+  const response = await fetch(
+    BASE + "links.json?t=" + Date.now(),
+    { cache: "no-store" }
+  );
+
+  // המרת התשובה לנתוני JSON
   const json = await response.json();
-  // קישורים שסומנו "הסתר מהקטלוג" לא מוצגים כאן (הם כן ממשיכים לעבוד כרגיל)
+
+  // הסתרת קישורים שסומנו להסתרה
   const entries = Object.entries(json).filter(([, v]) => !v.hidden);
 
+  // קבלת רכיבי העמוד
   const container = document.getElementById("links");
   const counter = document.getElementById("count");
   const search = document.getElementById("search");
 
+  // הצגת הקישורים בהתאם לחיפוש
   function render(filter) {
+
+    // הגדרת חיפוש ריק כברירת מחדל
     if (!filter) filter = "";
+
+    // ניקוי התצוגה הקודמת
     container.innerHTML = "";
 
+    // סינון הקישורים לפי כינוי, כותרת או כתובת
     const list = entries.filter(item => {
       const key = item[0];
       const value = item[1];
-      const text = (key + " " + (value.title || "") + " " + (value.passwordHash ? "" : value.url)).toLowerCase();
+
+      // אין להציג כתובת יעד של קישור מוגן בחיפוש
+      const text = (
+        key + " " +
+        (value.title || "") + " " +
+        (value.passwordHash ? "" : value.url)
+      ).toLowerCase();
+
       return text.indexOf(filter.toLowerCase()) !== -1;
     });
 
+    // עדכון מספר התוצאות
     counter.textContent = list.length + " קישורים";
-    list.sort((a, b) => (a[1].title || a[0]).localeCompare(b[1].title || b[0], "he"));
 
+    // מיון הקישורים לפי הכותרת
+    list.sort((a, b) =>
+      (a[1].title || a[0]).localeCompare(
+        b[1].title || b[0],
+        "he"
+      )
+    );
+
+    // יצירת כרטיס נפרד לכל קישור
     list.forEach(([key, value]) => {
+
+      // יצירת הכתובת המקוצרת
       const shortUrl = location.origin + BASE + key;
+
+      // בדיקה האם הקישור מוגן בסיסמה
       const protectedLink = !!value.passwordHash;
 
+      // יצירת כרטיס הקישור
       const card = document.createElement("div");
       card.className = "card";
 
-      // כותרת (אם הוגדרה) - לזיהוי קל של הקישור
+      // הצגת כותרת אם הוגדרה
       if (value.title) {
         const h = document.createElement("h3");
         h.className = "card-title";
@@ -99,116 +193,203 @@ async function loadLinks() {
         card.appendChild(h);
       }
 
-      // קישור מקוצר
+      // הצגת הקישור המקוצר
       const pShort = document.createElement("p");
       pShort.innerHTML = "<strong>קישור מקוצר</strong><br>";
+
       const spanShort = document.createElement("span");
       spanShort.textContent = shortUrl;
+
       pShort.appendChild(spanShort);
       card.appendChild(pShort);
 
-      // יעד - מוסתר אם הקישור מוגן בסיסמה, כדי לא לעקוף את ההגנה
+      // הצגת כתובת היעד או הודעת הגנה
       const pTarget = document.createElement("p");
       pTarget.innerHTML = "<strong>יעד</strong><br>";
+
       const spanTarget = document.createElement("span");
-      spanTarget.textContent = protectedLink ? "🔒 מוגן בסיסמה" : value.url;
+
+      // הסתרת כתובת היעד בקישור מוגן
+      spanTarget.textContent = protectedLink
+        ? "🔒 מוגן בסיסמה"
+        : value.url;
+
       pTarget.appendChild(spanTarget);
       card.appendChild(pTarget);
 
+      // יצירת אזור הכפתורים
       const actions = document.createElement("div");
       actions.className = "card-actions";
 
-      const btnShort = document.createElement("a");
-      btnShort.className = "btn-link btn-primary";
-      btnShort.href = shortUrl;
-      btnShort.target = "_blank";
-      btnShort.rel = "noopener";
-      btnShort.textContent = "🔗 פתח קישור";
-      actions.appendChild(btnShort);
+      // ==================================================
+      // שורה ראשונה: פתיחת יעד ופתיחת קישור מקוצר
+      // ==================================================
 
-      // "פתח יעד" / "העתק יעד" מוצגים רק אם הקישור לא מוגן בסיסמה
+      const primaryRow = document.createElement("div");
+      primaryRow.className = "action-row";
+
+      // כפתור פתיחת יעד - רק בקישור שאינו מוגן
       if (!protectedLink) {
+
         const btnTarget = document.createElement("a");
         btnTarget.className = "btn-link btn-primary";
         btnTarget.href = value.url;
         btnTarget.target = "_blank";
         btnTarget.rel = "noopener";
         btnTarget.textContent = "🌐 פתח יעד";
-        actions.appendChild(btnTarget);
+
+        primaryRow.appendChild(btnTarget);
       }
 
-      const btnCopyShort = document.createElement("a");
-      btnCopyShort.className = "btn-link btn-secondary";
-      btnCopyShort.href = "#";
-      btnCopyShort.textContent = "📋 העתק מקוצר";
-      btnCopyShort.onclick = e => {
-        e.preventDefault();
-        navigator.clipboard.writeText(shortUrl);
-        showToast("הקישור המקוצר הועתק");
-      };
-      actions.appendChild(btnCopyShort);
+      // כפתור פתיחת הקישור המקוצר
+      const btnShort = document.createElement("a");
+      btnShort.className = "btn-link btn-primary";
+      btnShort.href = shortUrl;
+      btnShort.target = "_blank";
+      btnShort.rel = "noopener";
+      btnShort.textContent = "🔗 פתח קישור";
 
-      // QR - מוסתר כברירת מחדל, מוצג בלחיצה
+      primaryRow.appendChild(btnShort);
+
+      // הוספת השורה הראשונה לאזור הכפתורים
+      actions.appendChild(primaryRow);
+
+      // ==================================================
+      // שורה שנייה: העתקת יעד, QR והעתקת קישור מקוצר
+      // ==================================================
+
+      const secondaryRow = document.createElement("div");
+      secondaryRow.className = "action-row";
+
+      // כפתור העתקת יעד - רק בקישור שאינו מוגן
+      if (!protectedLink) {
+
+        const btnCopyTarget = document.createElement("a");
+        btnCopyTarget.className = "btn-link btn-secondary";
+        btnCopyTarget.href = "#";
+        btnCopyTarget.textContent = "📋 העתק יעד";
+
+        // העתקת כתובת היעד ללוח
+        btnCopyTarget.onclick = e => {
+          e.preventDefault();
+
+          navigator.clipboard.writeText(value.url);
+          showToast("היעד הועתק");
+        };
+
+        secondaryRow.appendChild(btnCopyTarget);
+      }
+
+      // כפתור QR
       const btnQr = document.createElement("a");
       btnQr.className = "btn-link btn-secondary";
       btnQr.href = "#";
       btnQr.textContent = "📱 QR";
+
+      // הצגה והסתרה של קוד QR
       btnQr.onclick = e => {
         e.preventDefault();
+
+        // בדיקה האם קוד QR כבר מוצג
         const existing = card.querySelector(".qr-box");
+
+        // אם קיים QR, הסרתו
         if (existing) {
           existing.remove();
           btnQr.textContent = "📱 QR";
           return;
         }
+
+        // יצירת תיבת QR
         const box = document.createElement("div");
         box.className = "qr-box";
+
+        // יצירת תמונת QR
         const img = document.createElement("img");
         img.className = "qr-img";
         img.alt = "QR";
         img.width = 200;
         img.height = 200;
-        img.src = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data=" + encodeURIComponent(shortUrl);
+
+        // יצירת קוד QR עבור הקישור המקוצר
+        img.src =
+          "https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data=" +
+          encodeURIComponent(shortUrl);
+
+        // יצירת כיתוב מתחת לקוד
         const cap = document.createElement("div");
         cap.className = "qr-caption";
         cap.textContent = "סרוק כדי לפתוח את הקישור";
+
+        // הוספת התמונה והכיתוב לתיבה
         box.appendChild(img);
         box.appendChild(cap);
+
+        // הצגת תיבת QR בתוך הכרטיס
         card.appendChild(box);
+
+        // עדכון טקסט הכפתור
         btnQr.textContent = "✖ הסתר QR";
       };
-      actions.appendChild(btnQr);
 
-      if (!protectedLink) {
-        const btnCopy = document.createElement("a");
-        btnCopy.className = "btn-link btn-secondary";
-        btnCopy.href = "#";
-        btnCopy.textContent = "📋 העתק יעד";
-        btnCopy.onclick = e => {
-          e.preventDefault();
-          navigator.clipboard.writeText(value.url);
-          showToast("היעד הועתק");
-        };
-        actions.appendChild(btnCopy);
-      }
+      // הוספת QR באמצע השורה השנייה
+      secondaryRow.appendChild(btnQr);
 
+      // כפתור העתקת הקישור המקוצר
+      const btnCopyShort = document.createElement("a");
+      btnCopyShort.className = "btn-link btn-secondary";
+      btnCopyShort.href = "#";
+      btnCopyShort.textContent = "📋 העתק מקוצר";
+
+      // העתקת הקישור המקוצר ללוח
+      btnCopyShort.onclick = e => {
+        e.preventDefault();
+
+        navigator.clipboard.writeText(shortUrl);
+        showToast("הקישור המקוצר הועתק");
+      };
+
+      // הוספת כפתור ההעתקה אחרי QR
+      secondaryRow.appendChild(btnCopyShort);
+
+      // הוספת השורה השנייה לאזור הכפתורים
+      actions.appendChild(secondaryRow);
+
+      // הוספת אזור הכפתורים לכרטיס
       card.appendChild(actions);
+
+      // הוספת הכרטיס לעמוד
       container.appendChild(card);
     });
   }
 
+  // הפעלת חיפוש בכל שינוי בשדה החיפוש
   search.oninput = () => render(search.value);
+
+  // הצגת כל הקישורים בטעינה הראשונה
   render();
 }
 
+// הצגת הודעה זמנית בתחתית המסך
 function showToast(text) {
+
+  // קבלת תיבת ההודעות
   const toast = document.getElementById("toast");
+
+  // עדכון תוכן ההודעה
   toast.textContent = text;
+
+  // הצגת ההודעה
   toast.classList.add("show");
+
+  // הסתרת ההודעה לאחר שנייה וחצי
   setTimeout(() => toast.classList.remove("show"), 1500);
 }
 
+// טעינת הקישורים בעת פתיחת העמוד
 loadLinks();
+
 </script>
+
 </body>
 </html>
