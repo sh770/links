@@ -68,13 +68,14 @@ a{ color: var(--accent); }
   border-radius: var(--radius-sm);
   padding: 10px 12px;
   margin-top: 10px;
+  margin-bottom: 22px;
 }
 
 /* ===== טפסים ===== */
 input, button{
   font-family: var(--font);
   font-size: 16px;
-  padding: 9px 12px;
+  padding: 12px 16px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
 }
@@ -93,6 +94,8 @@ button{
   color: #fff;
   border: none;
   cursor: pointer;
+  min-height: 46px;
+  font-weight: 600;
   transition: background .15s ease;
 }
 button:hover{ background: var(--accent-hover); }
@@ -100,7 +103,7 @@ button.secondary{ background: var(--surface-2); color: var(--text); border: 1px 
 button.secondary:hover{ background: var(--border); }
 button.danger{ background: var(--danger); }
 button.danger:hover{ background: var(--danger-hover); }
-button.small{ padding: 5px 10px; font-size: 13px; }
+button.small{ padding: 10px 16px; font-size: 15px; min-height: 42px; }
 
 /* ===== רשימת קישורים מתקפלת (accordion) ===== */
 .link-item{
@@ -141,6 +144,7 @@ button.small{ padding: 5px 10px; font-size: 13px; }
   white-space: nowrap;
 }
 .link-header .chevron{
+  font-size: 24px;
   color: var(--text-dim);
   flex: none;
   transition: transform .15s ease;
@@ -155,7 +159,8 @@ button.small{ padding: 5px 10px; font-size: 13px; }
 }
 .link-body input{ margin-bottom: 0; }
 .check-row{ display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: var(--text); }
-.check-row input[type="checkbox"]{ width: auto; margin: 0; }
+.check-row{ min-height: 44px; font-size: 15px; }
+.check-row input[type="checkbox"]{ width: 22px; height: 22px; min-height: 0; padding: 0; margin: 0; flex: none; accent-color: var(--accent); }
 .field-label{
   display: block;
   font-size: 12px;
@@ -196,16 +201,42 @@ th{ color: var(--text-dim); font-weight: 600; }
 .btn-link{
   display: inline-block;
   margin-top: 14px;
-  padding: 10px 20px;
+  padding: 13px 26px;
   border-radius: var(--radius-sm);
   background: var(--accent);
   color: #fff;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 600;
 }
 .btn-link:hover{ background: var(--accent-hover); }
 .btn-link.secondary{ background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
 .btn-link.secondary:hover{ background: var(--border); }
+
+/* ===== תיבת QR (משותפת לדף הבית ולניהול) ===== */
+.qr-box{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 16px auto 4px;
+  padding: 18px;
+  max-width: 260px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  animation: qrIn .2s ease;
+}
+.qr-box .qr-img{
+  display: block;
+  width: 200px;
+  height: 200px;
+  padding: 12px;
+  background: #fff; /* רקע לבן הכרחי כדי שהקוד ייסרק */
+  border-radius: var(--radius);
+}
+.qr-box .qr-caption{ font-size: 13px; color: var(--text-dim); }
+@keyframes qrIn{ from{ opacity: 0; transform: translateY(-6px) scale(.97); } to{ opacity: 1; transform: none; } }
 
 /* טוסט קטן להודעות זמניות (למשל "הועתק") */
 #toast{
