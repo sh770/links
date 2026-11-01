@@ -21,7 +21,7 @@
   .card strong{ color:var(--text-dim); font-size:13px; }
   .card-actions{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:18px; }
   .card-actions .btn-link{
-    margin-top:0; padding:9px 16px; font-size:13.5px; border-radius:10px;
+    margin-top:0; padding:12px 20px; font-size:15px; border-radius:12px;
     transition: all .15s ease; display:inline-flex; align-items:center; gap:6px;
   }
   .card-actions .btn-primary{ background:var(--accent); color:#fff; }
@@ -147,6 +147,37 @@ async function loadLinks() {
         showToast("הקישור המקוצר הועתק");
       };
       actions.appendChild(btnCopyShort);
+
+      // QR - מוסתר כברירת מחדל, מוצג בלחיצה
+      const btnQr = document.createElement("a");
+      btnQr.className = "btn-link btn-secondary";
+      btnQr.href = "#";
+      btnQr.textContent = "📱 QR";
+      btnQr.onclick = e => {
+        e.preventDefault();
+        const existing = card.querySelector(".qr-box");
+        if (existing) {
+          existing.remove();
+          btnQr.textContent = "📱 QR";
+          return;
+        }
+        const box = document.createElement("div");
+        box.className = "qr-box";
+        const img = document.createElement("img");
+        img.className = "qr-img";
+        img.alt = "QR";
+        img.width = 200;
+        img.height = 200;
+        img.src = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data=" + encodeURIComponent(shortUrl);
+        const cap = document.createElement("div");
+        cap.className = "qr-caption";
+        cap.textContent = "סרוק כדי לפתוח את הקישור";
+        box.appendChild(img);
+        box.appendChild(cap);
+        card.appendChild(box);
+        btnQr.textContent = "✖ הסתר QR";
+      };
+      actions.appendChild(btnQr);
 
       if (!protectedLink) {
         const btnCopy = document.createElement("a");
