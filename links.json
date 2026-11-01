@@ -5,7 +5,7 @@
     "maxClicks": null,
     "passwordHash": null,
     "title": "קיט להרכבה עצמית עסק אטומי - עסק שרץ לבד",
-    "hidden": false
+    "hidden": true
   },
   "rust": {
     "url": "https://sh770.github.io/rustdesklatest/",
