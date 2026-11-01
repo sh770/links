@@ -16,6 +16,7 @@
   #search{ max-width:360px; margin:16px auto 8px; display:block; text-align:center; }
   #count{ margin:8px 0 20px; color:var(--text-dim); }
   .card{ text-align:center; }
+  .card-title{ margin:0 0 6px; font-size:17px; color:var(--text); word-break:break-word; }
   .card p{ margin:12px 0; word-break:break-all; line-height:1.5; }
   .card strong{ color:var(--text-dim); font-size:13px; }
   .card-actions{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:18px; }
@@ -62,7 +63,8 @@ const BASE = getBasePath();
 async function loadLinks() {
   const response = await fetch(BASE + "links.json?t=" + Date.now(), { cache: "no-store" });
   const json = await response.json();
-  const entries = Object.entries(json);
+  // קישורים שסומנו "הסתר מהקטלוג" לא מוצגים כאן (הם כן ממשיכים לעבוד כרגיל)
+  const entries = Object.entries(json).filter(([, v]) => !v.hidden);
 
   const container = document.getElementById("links");
   const counter = document.getElementById("count");
@@ -75,12 +77,12 @@ async function loadLinks() {
     const list = entries.filter(item => {
       const key = item[0];
       const value = item[1];
-      const text = (key + " " + (value.passwordHash ? "" : value.url)).toLowerCase();
+      const text = (key + " " + (value.title || "") + " " + (value.passwordHash ? "" : value.url)).toLowerCase();
       return text.indexOf(filter.toLowerCase()) !== -1;
     });
 
     counter.textContent = list.length + " קישורים";
-    list.sort((a, b) => a[0].localeCompare(b[0]));
+    list.sort((a, b) => (a[1].title || a[0]).localeCompare(b[1].title || b[0], "he"));
 
     list.forEach(([key, value]) => {
       const shortUrl = location.origin + BASE + key;
@@ -88,6 +90,14 @@ async function loadLinks() {
 
       const card = document.createElement("div");
       card.className = "card";
+
+      // כותרת (אם הוגדרה) - לזיהוי קל של הקישור
+      if (value.title) {
+        const h = document.createElement("h3");
+        h.className = "card-title";
+        h.textContent = value.title;
+        card.appendChild(h);
+      }
 
       // קישור מקוצר
       const pShort = document.createElement("p");
