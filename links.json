@@ -4,7 +4,8 @@
     "created": "2026-07-29T22:01:39.479Z",
     "maxClicks": null,
     "passwordHash": null,
-    "title": "קיט לסוכני ai"
+    "title": "קיט לסוכני ai",
+    "hidden": true
   },
   "rust": {
     "url": "https://sh770.github.io/rustdesklatest/",
