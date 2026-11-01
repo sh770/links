@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="style.css">
 <style>
   .addgrid{display:grid;grid-template-columns:1fr 1.6fr 1fr 1fr auto;gap:8px;align-items:start}
+  .addgrid .full{grid-column:1 / -1}
   @media (max-width:600px){
     .addgrid{grid-template-columns:1fr}
     .addgrid button{width:100%}
@@ -36,11 +37,13 @@
 
     <h3 style="margin-top:18px">הוספת קישור</h3>
     <div class="addgrid">
+      <input id="newTitle" class="full" maxlength="100" placeholder="כותרת (אופציונלי) - לזיהוי קל בקטלוג">
       <input id="newSlug" placeholder="כינוי (למשל: promo)">
       <input id="newUrl" placeholder="כתובת יעד מלאה (https://...)">
       <input id="newMax" type="number" min="1" placeholder="מס' כניסות (ריק=ללא הגבלה)">
       <input id="newPw" type="password" placeholder="סיסמה (אופציונלי)">
       <button onclick="addLink()">הוסף</button>
+      <label class="check-row full"><input type="checkbox" id="newHidden"> הסתר מהקטלוג הציבורי</label>
     </div>
     <div class="note">
       💡 לאחר שמירה, ייתכן שייקח דקה-שתיים עד שהשינוי יופיע בפועל
@@ -215,10 +218,17 @@ function renderList() {
     item.id = "row-" + slug;
     item.innerHTML =
       '<div class="link-header" onclick="toggleItem(\'' + s + '\')">' +
-        '<span class="link-url">' + escapeHtml(shortUrl) + '</span>' +
+        '<div class="link-head-text">' +
+          '<div class="link-title"' + (link.title ? '' : ' style="display:none"') + '>' + escapeHtml(link.title || "") + '</div>' +
+          '<span class="link-url">' + escapeHtml(shortUrl) + '</span>' +
+        '</div>' +
         '<span class="chevron">›</span>' +
       '</div>' +
       '<div class="link-body" style="display:none">' +
+        '<div>' +
+          '<span class="field-label">כותרת (לזיהוי בקטלוג)</span>' +
+          '<input maxlength="100" value="' + attrHtml(link.title || "") + '" onchange="editTitle(\'' + s + '\', this.value)">' +
+        '</div>' +
         '<div>' +
           '<span class="field-label">כינוי (הנתיב בקישור)</span>' +
           '<input value="' + attrHtml(slug) + '" onchange="renameSlug(\'' + s + '\', this.value)">' +
@@ -243,6 +253,7 @@ function renderList() {
           '</div>' +
           '<input type="password" placeholder="הגדר/החלף סיסמה" onchange="editPw(\'' + s + '\', this.value)">' +
         '</div>' +
+        '<label class="check-row"><input type="checkbox" ' + (link.hidden ? 'checked ' : '') + 'onchange="editHidden(\'' + s + '\', this.checked)"> הסתר מהקטלוג הציבורי</label>' +
         '<div class="qr-holder" data-shown="0"></div>' +
         '<div class="field-row" id="actions-' + attrHtml(slug) + '">' +
           '<button class="secondary small" onclick="copyLink(\'' + s + '\')">העתק קישור</button>' +
@@ -296,6 +307,23 @@ function renameSlug(oldSlug, newSlugRaw) {
   toast('הכינוי שונה ל-"' + newSlug + '" (ספירת הקליקים מתחילה מחדש)');
 }
 
+function editHidden(slug, checked) {
+  links[slug].hidden = !!checked;
+  saveLinks();
+}
+
+function editTitle(slug, value) {
+  const title = value.trim().slice(0, 100);
+  links[slug].title = title;
+  const row = document.getElementById("row-" + slug);
+  const el = row ? row.querySelector(".link-title") : null;
+  if (el) {
+    el.textContent = title;
+    el.style.display = title ? "block" : "none";
+  }
+  saveLinks();
+}
+
 function editUrl(slug, value) {
   links[slug].url = value;
   saveLinks();
@@ -336,6 +364,7 @@ function confirmDelete(slug) {
 }
 
 async function addLink() {
+  const title = document.getElementById("newTitle").value.trim().slice(0, 100);
   const slug = document.getElementById("newSlug").value.trim();
   const url = document.getElementById("newUrl").value.trim();
   const max = document.getElementById("newMax").value.trim();
@@ -354,11 +383,15 @@ async function addLink() {
     return;
   }
   links[slug] = {
+    title: title,
     url: url,
     created: new Date().toISOString(),
     maxClicks: max ? parseInt(max, 10) : null,
-    passwordHash: pw ? await sha256(pw) : null
+    passwordHash: pw ? await sha256(pw) : null,
+    hidden: document.getElementById("newHidden").checked
   };
+  document.getElementById("newTitle").value = "";
+  document.getElementById("newHidden").checked = false;
   document.getElementById("newSlug").value = "";
   document.getElementById("newUrl").value = "";
   document.getElementById("newMax").value = "";
