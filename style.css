@@ -118,7 +118,18 @@ button.small{ padding: 5px 10px; font-size: 13px; }
   cursor: pointer;
   gap: 10px;
 }
+.link-header .link-head-text{ flex: 1; min-width: 0; }
+.link-header .link-title{
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .link-header .link-url{
+  display: block;
   direction: ltr;
   unicode-bidi: plaintext;
   text-align: left;
@@ -128,7 +139,6 @@ button.small{ padding: 5px 10px; font-size: 13px; }
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  flex: 1;
 }
 .link-header .chevron{
   color: var(--text-dim);
@@ -144,6 +154,8 @@ button.small{ padding: 5px 10px; font-size: 13px; }
   gap: 12px;
 }
 .link-body input{ margin-bottom: 0; }
+.check-row{ display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: var(--text); }
+.check-row input[type="checkbox"]{ width: auto; margin: 0; }
 .field-label{
   display: block;
   font-size: 12px;
