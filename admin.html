@@ -9,12 +9,9 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
 <style>
-  .addgrid{display:grid;grid-template-columns:1fr 1.6fr 1fr 1fr auto;gap:8px;align-items:start}
-  .addgrid .full{grid-column:1 / -1}
-  @media (max-width:600px){
-    .addgrid{grid-template-columns:1fr}
-    .addgrid button{width:100%}
-  }
+  .addform{display:flex;flex-direction:column;gap:14px}
+  .addform input{margin-bottom:0}
+  .addform > button{width:100%;margin-top:4px}
 </style>
 </head>
 <body>
@@ -23,7 +20,7 @@
 
   <div class="card" id="loginCard">
     <p>הזן את ה-GitHub Token שלך כדי לנהל את הקישורים.</p>
-    <input id="token" type="password" placeholder="GitHub Personal Access Token">
+    <input id="token" type="password" dir="ltr" placeholder="GitHub Personal Access Token">
     <button onclick="login()">התחבר</button>
     <div id="loginMsg" class="msg"></div>
     <p><small style="color:var(--text-dim)">הטוקן נשמר רק בדפדפן שלך (localStorage) ולא נכתב לריפו. יש ליצור טוקן עם הרשאת כתיבה לריפו הזה בלבד (ראה README).</small></p>
@@ -36,14 +33,29 @@
     </div>
 
     <h3 style="margin-top:18px">הוספת קישור</h3>
-    <div class="addgrid">
-      <input id="newTitle" class="full" maxlength="100" placeholder="כותרת (אופציונלי) - לזיהוי קל בקטלוג">
-      <input id="newSlug" placeholder="כינוי (למשל: promo)">
-      <input id="newUrl" placeholder="כתובת יעד מלאה (https://...)">
-      <input id="newMax" type="number" min="1" placeholder="מס' כניסות (ריק=ללא הגבלה)">
-      <input id="newPw" type="password" placeholder="סיסמה (אופציונלי)">
-      <button onclick="addLink()">הוסף</button>
-      <label class="check-row full"><input type="checkbox" id="newHidden"> הסתר מהקטלוג הציבורי</label>
+    <div class="addform">
+      <div>
+        <span class="field-label">כותרת (אופציונלי) - לזיהוי קל בקטלוג</span>
+        <input id="newTitle" maxlength="100" placeholder="לדוגמה: מבצע חורף">
+      </div>
+      <div>
+        <span class="field-label">כינוי (הנתיב בקישור)</span>
+        <input id="newSlug" placeholder="לדוגמה: promo">
+      </div>
+      <div>
+        <span class="field-label">כתובת יעד מלאה</span>
+        <input id="newUrl" dir="ltr" placeholder="https://...">
+      </div>
+      <div>
+        <span class="field-label">מספר כניסות מקסימלי (ריק = ללא הגבלה)</span>
+        <input id="newMax" type="number" min="1">
+      </div>
+      <div>
+        <span class="field-label">סיסמה (אופציונלי)</span>
+        <input id="newPw" type="password">
+      </div>
+      <label class="check-row"><input type="checkbox" id="newHidden"> הסתר מהקטלוג הציבורי</label>
+      <button onclick="addLink()">➕ הוסף ושמור בשרת</button>
     </div>
     <div class="note">
       💡 לאחר שמירה, ייתכן שייקח דקה-שתיים עד שהשינוי יופיע בפועל
@@ -163,8 +175,8 @@ function toggleQr(slug) {
     holder.dataset.shown = "0";
   } else {
     const url = SITE_URL + encodeURIComponent(slug);
-    const qrSrc = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" + encodeURIComponent(url);
-    holder.innerHTML = '<img src="' + qrSrc + '" alt="QR" width="120" height="120" style="margin-top:6px;border-radius:8px;display:block">';
+    const qrSrc = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data=" + encodeURIComponent(url);
+    holder.innerHTML = '<div class="qr-box"><img class="qr-img" src="' + qrSrc + '" alt="QR" width="200" height="200"><div class="qr-caption">סרוק כדי לפתוח את הקישור</div></div>';
     holder.dataset.shown = "1";
   }
 }
@@ -235,7 +247,7 @@ function renderList() {
         '</div>' +
         '<div>' +
           '<span class="field-label">כתובת יעד</span>' +
-          '<input value="' + attrHtml(link.url || "") + '" onchange="editUrl(\'' + s + '\', this.value)">' +
+          '<input dir="ltr" value="' + attrHtml(link.url || "") + '" onchange="editUrl(\'' + s + '\', this.value)">' +
         '</div>' +
         '<div class="field-row">' +
           '<div style="flex:1"><span class="field-label">נוצר</span><div>' + fmtDate(link.created) + '</div></div>' +
