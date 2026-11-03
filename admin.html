@@ -76,6 +76,7 @@
 <script>
 let links = {};
 let sha = null;
+let serverSnapshot = ""; // מצב הקישורים כפי שהוא ידוע בשרת (לזיהוי שינוי ממקום אחר)
 
 // חייב להיות זהה לקידומת ב-404.html
 const COUNTER_PREFIX = "sh770links_";
@@ -127,6 +128,33 @@ function attrJs(str) {
   // בטוח להטמעה בתוך onclick="fn('...')"
   return String(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'")
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+// קידוד base64 תקין ל-UTF-8 (במקום הפונקציות הישנות שהוצאו משימוש)
+function b64ToText(b64) {
+  const bin = atob(b64.replace(/\s/g, ""));
+  return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+}
+function textToB64(text) {
+  let bin = "";
+  new TextEncoder().encode(text).forEach(b => { bin += String.fromCharCode(b); });
+  return btoa(bin);
+}
+
+// כתובת יעד חייבת להיות http/https בלבד - חוסם javascript:, data: וכד'
+function isSafeUrl(u) {
+  try {
+    const p = new URL(u).protocol;
+    return p === "http:" || p === "https:";
+  } catch (e) {
+    return false;
+  }
+}
+
+// האם כינוי כבר קיים (בלי הבחנה בין אותיות גדולות/קטנות, כי 404.html מתאים כך)
+function slugExists(s, except) {
+  const l = s.toLowerCase();
+  return Object.keys(links).some(k => k !== except && k.toLowerCase() === l);
 }
 
 const SLUG_RE = /^[A-Za-z0-9_-]+$/;
@@ -200,13 +228,20 @@ function logout() {
   document.getElementById("loginCard").style.display = "block";
 }
 
+// קריאת links.json מהשרת (כולל ה-SHA העדכני)
+async function fetchRemote() {
+  const res = await fetch(api("/contents/links.json"), { headers: headers(), cache: "no-store" });
+  if (!res.ok) throw new Error(res.status === 401 || res.status === 403 ? "טוקן לא תקין או ללא הרשאה" : "שגיאה בטעינה (" + res.status + ")");
+  const data = await res.json();
+  return { sha: data.sha, text: b64ToText(data.content) };
+}
+
 async function loadLinks() {
   try {
-    const res = await fetch(api("/contents/links.json"), { headers: headers() });
-    if (!res.ok) throw new Error(res.status === 401 || res.status === 403 ? "טוקן לא תקין או ללא הרשאה" : "שגיאה בטעינה (" + res.status + ")");
-    const data = await res.json();
-    sha = data.sha;
-    links = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+    const remote = await fetchRemote();
+    sha = remote.sha;
+    links = JSON.parse(remote.text);
+    serverSnapshot = JSON.stringify(links);
     document.getElementById("loginCard").style.display = "none";
     document.getElementById("manageCard").style.display = "block";
     document.getElementById("whoami").textContent = OWNER + "/" + REPO;
@@ -310,15 +345,15 @@ function renameSlug(oldSlug, newSlugRaw) {
     renderList();
     return;
   }
-  if (links[newSlug]) {
-    toast('הכינוי "' + newSlug + '" כבר תפוס');
+  if (slugExists(newSlug, oldSlug)) {
+    toast('הכינוי "' + newSlug + '" כבר תפוס (אותיות גדולות וקטנות נחשבות זהות)');
     renderList();
     return;
   }
   links[newSlug] = links[oldSlug];
   delete links[oldSlug];
   renderList();
-  saveLinks();
+  saveLinks(true);
   toast('הכינוי שונה ל-"' + newSlug + '" (ספירת הקליקים מתחילה מחדש)');
 }
 
@@ -340,7 +375,13 @@ function editTitle(slug, value) {
 }
 
 function editUrl(slug, value) {
-  links[slug].url = value;
+  const url = value.trim();
+  if (!isSafeUrl(url)) {
+    toast("כתובת היעד חייבת להתחיל ב-http:// או ב-https://");
+    renderList();
+    return;
+  }
+  links[slug].url = url;
   saveLinks();
 }
 
@@ -375,7 +416,7 @@ function askDelete(slug) {
 function confirmDelete(slug) {
   delete links[slug];
   renderList();
-  saveLinks();
+  saveLinks(true);
 }
 
 async function addLink() {
@@ -385,6 +426,10 @@ async function addLink() {
   const max = document.getElementById("newMax").value.trim();
   const pw = document.getElementById("newPw").value;
   if (!slug || !url) return;
+  if (!isSafeUrl(url)) {
+    toast("כתובת היעד חייבת להתחיל ב-http:// או ב-https://");
+    return;
+  }
   if (RESERVED_SLUGS.includes(slug.toLowerCase())) {
     toast('הכינוי "' + slug + '" שמור לשימוש המערכת (מתנגש עם דף קיים)');
     return;
@@ -393,8 +438,8 @@ async function addLink() {
     toast("כינוי יכול להכיל רק אותיות/ספרות באנגלית, מקף וקו תחתון");
     return;
   }
-  if (links[slug]) {
-    toast('הכינוי "' + slug + '" כבר תפוס');
+  if (slugExists(slug)) {
+    toast('הכינוי "' + slug + '" כבר תפוס (אותיות גדולות וקטנות נחשבות זהות)');
     return;
   }
   links[slug] = {
@@ -412,27 +457,69 @@ async function addLink() {
   document.getElementById("newMax").value = "";
   document.getElementById("newPw").value = "";
   renderList();
-  saveLinks();
+  saveLinks(true);
 }
 
-async function saveLinks() {
+// ===== שמירה לשרת =====
+// השינויים נאספים ונשמרים בקומיט אחד (השהיה קצרה), שמירות לא רצות במקביל,
+// ולפני כל שמירה נקרא ה-SHA העדכני. אם הקובץ שונה ממקום אחר - לא דורסים.
+let saveTimer = null;
+let saving = false;
+let dirty = false;
+
+function saveLinks(immediate) {
+  dirty = true;
+  setMsg("saveMsg", "שומר...", false);
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushSave, immediate ? 0 : 700);
+}
+
+async function flushSave() {
+  if (saving || !dirty) return; // אם נוספו שינויים בזמן שמירה - תתבצע שמירה נוספת בסיומה
+  saving = true;
+  dirty = false;
+  let failed = false;
   try {
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(links, null, 2))));
+    const remote = await fetchRemote();
+    let remoteLinks = null;
+    try { remoteLinks = JSON.parse(remote.text); } catch (e) {}
+    if (JSON.stringify(remoteLinks) !== serverSnapshot) {
+      // הקובץ שונה במקום אחר מאז שנטען - טוענים מחדש במקום לדרוס
+      failed = true;
+      dirty = false;
+      links = remoteLinks || {};
+      sha = remote.sha;
+      serverSnapshot = JSON.stringify(links);
+      renderList();
+      setMsg("saveMsg", "הקישורים שונו ממקום אחר, ולכן הרשימה נטענה מחדש. השינוי האחרון לא נשמר - בצע אותו שוב.", true);
+      return;
+    }
     const res = await fetch(api("/contents/links.json"), {
       method: "PUT",
       headers: headers(),
       body: JSON.stringify({
         message: "עדכון links.json",
-        content: content,
-        sha: sha
+        content: textToB64(JSON.stringify(links, null, 2)),
+        sha: remote.sha
       })
     });
     if (!res.ok) throw new Error("שמירה נכשלה (" + res.status + ")");
     const data = await res.json();
     sha = data.content.sha;
-    setMsg("saveMsg", "נשמר בהצלחה. ייתכן שיעברו דקה-שתיים עד שהשינוי יופיע באתר החי.", false);
+    serverSnapshot = JSON.stringify(links);
   } catch (e) {
-    setMsg("saveMsg", e.message, true);
+    failed = true;
+    dirty = true; // השינוי עדיין לא נשמר
+    setMsg("saveMsg", e.message + " - השינוי עדיין לא נשמר. בצע שינוי נוסף כדי לנסות שוב.", true);
+  } finally {
+    saving = false;
+    if (!failed) {
+      if (dirty) {
+        flushSave();
+      } else {
+        setMsg("saveMsg", "נשמר בהצלחה. ייתכן שיעברו דקה-שתיים עד שהשינוי יופיע באתר החי.", false);
+      }
+    }
   }
 }
 

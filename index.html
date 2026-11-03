@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -47,6 +46,13 @@
   #count {
     margin: 8px 0 20px;
     color: var(--text-dim);
+  }
+
+  /* הודעה כשאין תוצאות / כשהטעינה נכשלה */
+  .empty-state {
+    margin: 28px 0;
+    color: var(--text-dim);
+    line-height: 1.6;
   }
 
   /* עיצוב תוכן הכרטיס */
@@ -117,25 +123,70 @@ function getBasePath() {
 // שמירת נתיב הבסיס
 const BASE = getBasePath();
 
+// כתובת יעד חייבת להיות http/https בלבד - חוסם javascript:, data: וכד'
+function isSafeUrl(u) {
+  try {
+    const p = new URL(u).protocol;
+    return p === "http:" || p === "https:";
+  } catch (e) {
+    return false;
+  }
+}
+
+// העתקה ללוח, עם גיבוי לדפדפנים ישנים, והודעה אמיתית על הצלחה/כישלון
+async function copyText(text, okMessage) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast(okMessage);
+    return;
+  } catch (e) {}
+
+  // גיבוי: העתקה דרך שדה טקסט זמני
+  let ok = false;
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try { ok = document.execCommand("copy"); } catch (e) {}
+  ta.remove();
+
+  showToast(ok ? okMessage : "לא ניתן להעתיק אוטומטית - העתק ידנית");
+}
+
 // טעינת הקישורים מקובץ JSON
 async function loadLinks() {
-
-  // טעינת הקובץ ללא שימוש במטמון
-  const response = await fetch(
-    BASE + "links.json?t=" + Date.now(),
-    { cache: "no-store" }
-  );
-
-  // המרת התשובה לנתוני JSON
-  const json = await response.json();
-
-  // הסתרת קישורים שסומנו להסתרה
-  const entries = Object.entries(json).filter(([, v]) => !v.hidden);
 
   // קבלת רכיבי העמוד
   const container = document.getElementById("links");
   const counter = document.getElementById("count");
   const search = document.getElementById("search");
+
+  // טעינת הקובץ ללא שימוש במטמון
+  let json;
+  try {
+    const response = await fetch(
+      BASE + "links.json?t=" + Date.now(),
+      { cache: "no-store" }
+    );
+
+    if (!response.ok) throw new Error("HTTP " + response.status);
+
+    // המרת התשובה לנתוני JSON
+    json = await response.json();
+  } catch (e) {
+    // הצגת הודעת שגיאה במקום עמוד ריק
+    counter.textContent = "";
+    const msg = document.createElement("p");
+    msg.className = "empty-state";
+    msg.textContent = "לא ניתן לטעון את רשימת הקישורים כרגע. נסה לרענן את העמוד.";
+    container.appendChild(msg);
+    return;
+  }
+
+  // הסתרת קישורים שסומנו להסתרה
+  const entries = Object.entries(json).filter(([, v]) => !v.hidden);
 
   // הצגת הקישורים בהתאם לחיפוש
   function render(filter) {
@@ -163,6 +214,17 @@ async function loadLinks() {
 
     // עדכון מספר התוצאות
     counter.textContent = list.length + " קישורים";
+
+    // הודעה כשאין מה להציג
+    if (list.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.textContent = filter
+        ? "לא נמצאו קישורים שמתאימים לחיפוש."
+        : "אין קישורים להצגה.";
+      container.appendChild(empty);
+      return;
+    }
 
     // מיון הקישורים לפי הכותרת
     list.sort((a, b) =>
@@ -228,8 +290,8 @@ async function loadLinks() {
       const primaryRow = document.createElement("div");
       primaryRow.className = "action-row";
 
-      // כפתור פתיחת יעד - רק בקישור שאינו מוגן
-      if (!protectedLink) {
+      // כפתור פתיחת יעד - רק בקישור שאינו מוגן ושכתובתו תקינה (http/https)
+      if (!protectedLink && isSafeUrl(value.url)) {
 
         const btnTarget = document.createElement("a");
         btnTarget.className = "btn-link btn-primary";
@@ -272,9 +334,7 @@ async function loadLinks() {
         // העתקת כתובת היעד ללוח
         btnCopyTarget.onclick = e => {
           e.preventDefault();
-
-          navigator.clipboard.writeText(value.url);
-          showToast("היעד הועתק");
+          copyText(value.url, "היעד הועתק");
         };
 
         secondaryRow.appendChild(btnCopyTarget);
@@ -344,9 +404,7 @@ async function loadLinks() {
       // העתקת הקישור המקוצר ללוח
       btnCopyShort.onclick = e => {
         e.preventDefault();
-
-        navigator.clipboard.writeText(shortUrl);
-        showToast("הקישור המקוצר הועתק");
+        copyText(shortUrl, "הקישור המקוצר הועתק");
       };
 
       // הוספת כפתור ההעתקה אחרי QR
@@ -371,6 +429,7 @@ async function loadLinks() {
 }
 
 // הצגת הודעה זמנית בתחתית המסך
+let toastTimer = null;
 function showToast(text) {
 
   // קבלת תיבת ההודעות
@@ -382,8 +441,9 @@ function showToast(text) {
   // הצגת ההודעה
   toast.classList.add("show");
 
-  // הסתרת ההודעה לאחר שנייה וחצי
-  setTimeout(() => toast.classList.remove("show"), 1500);
+  // הסתרת ההודעה לאחר שנייה וחצי (ואיפוס טיימר קודם אם יש)
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 1500);
 }
 
 // טעינת הקישורים בעת פתיחת העמוד

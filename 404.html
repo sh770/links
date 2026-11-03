@@ -67,7 +67,22 @@ function getSlug() {
   } else {
     path = path.replace(/^\//, "");
   }
-  return decodeURIComponent(path.replace(/\/$/, ""));
+  path = path.replace(/\/$/, "");
+  try {
+    return decodeURIComponent(path);
+  } catch (e) {
+    return path; // כתובת עם קידוד פגום - לא קורסים, פשוט לא יימצא כינוי כזה
+  }
+}
+
+// כתובת יעד חייבת להיות http/https בלבד - חוסם javascript:, data: וכד'
+function isSafeUrl(u) {
+  try {
+    const p = new URL(u).protocol;
+    return p === "http:" || p === "https:";
+  } catch (e) {
+    return false;
+  }
 }
 
 async function getClickCount(slug) {
@@ -138,15 +153,25 @@ async function redirect() {
     return;
   }
 
-  const link = links[slug];
+  // התאמה מדויקת קודם; אם אין - התאמה בלי הבחנה בין אותיות גדולות/קטנות.
+  // (hasOwnProperty כדי ש"constructor" וכד' לא ייחשבו בטעות כינוי קיים)
+  const has = k => Object.prototype.hasOwnProperty.call(links, k);
+  const key = has(slug) ? slug : Object.keys(links).find(k => k.toLowerCase() === slug.toLowerCase());
+  const link = key !== undefined ? links[key] : undefined;
   if (!link) {
     showDeadEnd('הקישור <b>' + escapeHtml(slug) + '</b> לא נמצא.');
     return;
   }
+  currentSlug = key; // מפתח הספירה נקבע לפי הכינוי האמיתי, לא לפי האותיות שהוקלדו
   currentLink = link;
 
+  if (!isSafeUrl(link.url)) {
+    showDeadEnd('היעד של הקישור <b>' + escapeHtml(slug) + '</b> אינו תקין.');
+    return;
+  }
+
   if (link.maxClicks) {
-    const count = await getClickCount(slug);
+    const count = await getClickCount(key);
     if (count >= link.maxClicks) {
       showDeadEnd('הקישור <b>' + escapeHtml(slug) + '</b> פג תוקף (הגיע למספר הכניסות המותר).');
       return;
@@ -162,6 +187,11 @@ async function redirect() {
 
   hitAndRedirect();
 }
+// Enter בשדה הסיסמה שולח אותה
+document.getElementById("pwInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") checkPassword();
+});
+
 redirect();
 </script>
 </body>

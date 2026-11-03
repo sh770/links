@@ -10,28 +10,31 @@ A pure static link shortener hosted on GitHub Pages (`sh770.github.io/links`), w
 
 The whole system runs on the **GitHub Pages 404 trick**:
 
-- `links.json` is the database. **The alias/slug is the JSON key**, not a field inside the record (`links[slug]` → `{url, created, maxClicks, passwordHash}`).
-- `404.html` is served by GitHub Pages for every non-existent path. It extracts the slug from `location.pathname`, fetches `links.json`, and performs the redirect — enforcing `maxClicks` and `passwordHash` (SHA-256 via Web Crypto) client-side. A valid unprotected link redirects silently with no UI; UI appears only for not-found / expired / password-required cases.
+- `links.json` is the database. **The alias/slug is the JSON key**, not a field inside the record (`links[slug]` → `{title, url, created, maxClicks, passwordHash, hidden}`; `title` and `hidden` are optional — older records may lack them).
+- `404.html` is served by GitHub Pages for every non-existent path. It extracts the slug from `location.pathname`, fetches `links.json`, and performs the redirect — enforcing `maxClicks` and `passwordHash` (SHA-256 via Web Crypto) client-side. Lookup is exact-match first, then case-insensitive. A valid unprotected link redirects silently with no UI; UI appears only for not-found / expired / invalid-destination / password-required cases.
 - `admin.html` is the management UI. There is no backend: it authenticates by holding a **GitHub fine-grained PAT entered by the user** (stored only in the browser's localStorage, never in the repo) and writes changes via the GitHub REST API (`PUT /contents/links.json` with base64 content + current SHA). After saving, GitHub Pages' deploy delay means changes take a minute or two to appear publicly.
-- `index.html` is a public, token-free catalog of all links with search.
+- `index.html` is a public, token-free catalog with search, titles and QR codes. It skips records with `hidden: true`, and hides the destination of password-protected links.
 - `server.js` — local dev server only; not used in production.
 
 ## Cross-file invariants (breaking these silently breaks the site)
 
-- **`COUNTER_PREFIX` must be identical in `404.html:22` and `admin.html:63`.** Click counts live in the external countapi.mileshilliard.com service keyed by `COUNTER_PREFIX + slug`; if the prefixes drift, counts appear as 0.
-- **`OWNER`/`REPO` constants in `admin.html` (~line 68)** — needed for GitHub API calls; must be hand-edited if the repo moves accounts/names. (The public base path, by contrast, is auto-detected from `location.pathname` in every page, so custom domains need no code change.)
+- **`COUNTER_PREFIX` must be identical in `404.html` and `admin.html`** (a constant near the top of each script). Click counts live in the external countapi.mileshilliard.com service keyed by `COUNTER_PREFIX + slug`; if the prefixes drift, counts appear as 0.
+- **`OWNER`/`REPO` constants in `admin.html`** — needed for GitHub API calls; must be hand-edited if the repo moves accounts/names. (The public base path, by contrast, is auto-detected from `location.pathname` in every page, so custom domains need no code change.)
 - **Reserved slugs:** `admin`, `index`, `404` are always blocked (`RESERVED_SLUGS` in admin.html) because GitHub Pages resolves extensionless URLs to the real HTML files, bypassing the 404 redirect mechanism.
-- **Slug validation:** new slugs must match `/^[A-Za-z0-9_-]+$/` (`SLUG_RE`).
-- Any "save" flow in admin must re-fetch the current JSON **SHA** immediately before `PUT /contents/links.json`, or save fails on concurrent edits.
+- **Slug validation:** new slugs must match `/^[A-Za-z0-9_-]+$/` (`SLUG_RE`), and must not collide case-insensitively with an existing slug (`slugExists`), because `404.html` falls back to case-insensitive matching.
+- **All saves in admin go through `saveLinks()` → `flushSave()`** (debounced, serialized, re-fetches `links.json` + SHA before every `PUT`, and reloads instead of overwriting if the file changed remotely since load). Never add a direct `PUT /contents/links.json` that bypasses it.
+- **Destination URLs must be `http:`/`https:` only** (`isSafeUrl`, duplicated in `admin.html`, `404.html`, `index.html`) — validated on write in admin and again on use in the public pages, to block `javascript:`/`data:` URLs.
 
 ## Security conventions (established by past fixes — preserve them)
 
-- **Never interpolate dynamic values into HTML/JS unescaped.** Use `escapeHtml` before injecting into HTML, `attrJs`/`attrHtml` before injecting into `onclick="..."` attributes, in both `404.html` and `admin.html`. XSS via malicious slugs was a real past vulnerability (admin token sits in the site's localStorage).
+- **Never interpolate dynamic values into HTML/JS unescaped.** Use `escapeHtml` before injecting into HTML, `attrJs`/`attrHtml` before injecting into `onclick="..."` attributes, in both `404.html` and `admin.html`; in `index.html` build DOM with `textContent`/`createElement`. XSS via malicious slugs was a real past vulnerability (admin token sits in the site's localStorage).
 - **Don't look up DOM elements via CSS selectors built from slugs** (`#row-<slug>` breaks on special chars in legacy slugs); use ID-based lookup + traversal.
-- Never hardcode tokens in code or commit `token.txt` (it contains a real PAT — do not read it into commits/docs).
-- Known, documented-unfixable limitations (don't report as new bugs): `links.json` is public so password hashes are crackable offline ("soft" protection), and the public counter API allows DoS on `maxClicks`.
+- **Look up slugs with `hasOwnProperty`** (as `404.html` does), never plain `links[slug]` on untrusted input (`constructor`, `__proto__`, ...).
+- Never hardcode tokens in code or commit token files (`token.txt` is gitignored).
+- Known, documented-unfixable limitations (don't report as new bugs): `links.json` is public so destination URLs and password hashes are readable/crackable ("soft" protection, and `hidden` only hides from the catalog list), and the public counter API allows DoS on `maxClicks`.
 
 ## Editing notes
 
-- Keep UI text and code comments in Hebrew, matching existing style; keep the dark rounded theme in `style.css` consistent across pages.
+- Keep UI text and code comments in Hebrew, matching existing style; keep the dark rounded theme in `style.css` consistent across pages (it is shared by all pages — avoid duplicate rules).
 - Internal links are extensionless (`href="admin"` not `href="admin.html"`) — a GitHub Pages behavior the site relies on.
+- Deployment is `.github/workflows/static.yml`: it copies the repo into `_site` **excluding** `.git`, `.github`, `.gitignore`, `CLAUDE.md`, `README.md`, `server.js` and publishes only that. New site assets are published automatically; new dev/doc files should be added to the exclude list.

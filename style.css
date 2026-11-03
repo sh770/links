@@ -1,4 +1,3 @@
-
 :root {
   --bg: #0e1015;
   --surface: #171a21;
@@ -35,7 +34,14 @@ a {
   color: var(--accent);
 }
 
-/* ===== פריסת עמוד ריכוזי (index, 404) ===== */
+/* סימון פוקוס ברור לניווט במקלדת */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ===== פריסת עמוד ריכוזי (404) ===== */
 
 .center-page {
   min-height: 100vh;
@@ -68,7 +74,7 @@ a {
   margin: 8px 0;
 }
 
-/* ===== פריסת עמוד רחב (admin) ===== */
+/* ===== פריסת עמוד רחב (admin, index) ===== */
 
 .wrap {
   max-width: 900px;
@@ -120,7 +126,6 @@ button {
 
 input {
   width: 100%;
-  box-sizing: border-box;
   margin-bottom: 8px;
   background: var(--surface-2);
   color: var(--text);
@@ -280,38 +285,6 @@ button.small {
   align-items: center;
 }
 
-/* ===== טבלה ===== */
-
-.table-wrap {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-  font-size: 13px;
-}
-
-td,
-th {
-  padding: 8px 6px;
-  border-bottom: 1px solid var(--border);
-  text-align: right;
-  vertical-align: middle;
-  color: var(--text);
-}
-
-th {
-  color: var(--text-dim);
-  font-weight: 600;
-}
-
-.row-actions button {
-  margin-inline-start: 4px;
-}
-
 /* ===== רכיבים כלליים ===== */
 
 .badge {
@@ -397,23 +370,31 @@ th {
   width: 100%;
 }
 
-/* כל שורת כפתורים */
+/* כל שורת כפתורים: שורה ראשונה 2 עמודות, שורה אחרונה 3 עמודות */
 .card-actions .action-row {
-  display: flex;
-  justify-content: center;
+  display: grid;
   align-items: stretch;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
+}
+
+.card-actions .action-row:first-child {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.card-actions .action-row:last-child {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 /* גודל אחיד לכל הכפתורים בכרטיס */
 .card-actions .btn-link {
-  flex: 1 1 0;
+  width: 100%;
   max-width: 180px;
   min-width: 0;
-  min-height: 54px;
+  min-height: 50px;
   margin: 0;
-  padding: 10px 8px;
+  padding: 8px 5px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -421,6 +402,7 @@ th {
   font-size: 15px;
   line-height: 1.3;
   white-space: normal;
+  overflow-wrap: anywhere;
   border-radius: 14px;
   transition: all .15s ease;
 }
@@ -452,7 +434,7 @@ th {
   transform: translateY(-1px);
 }
 
-/* ===== תיבת QR משותפת ===== */
+/* ===== תיבת QR משותפת (דף הבית והניהול) ===== */
 
 .qr-box {
   display: flex;
@@ -468,6 +450,7 @@ th {
   animation: qrIn .2s ease;
 }
 
+/* רקע לבן הכרחי כדי שהקוד יהיה ניתן לסריקה */
 .qr-box .qr-img {
   display: block;
   width: 200px;
@@ -533,49 +516,7 @@ th {
 
 /* התאמה מיוחדת למסכים צרים */
 @media (max-width: 380px) {
-  .card-actions .action-row {
-    gap: 6px;
-  }
-
   .card-actions .btn-link {
-    padding: 9px 4px;
     font-size: 13px;
-    min-height: 50px;
   }
-}
-
-
-/* שיפור אחידות הכפתורים ומסגרת קוד ה-QR */
-.card-actions .action-row {
-  display: grid;
-  align-items: stretch;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-}
-.card-actions .action-row:first-child {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.card-actions .action-row:last-child {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-.card-actions .btn-link {
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  min-height: 50px;
-  margin: 0;
-  padding: 8px 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-.card-actions .qr-box {
-  padding: 8px;
-  border: 2px solid var(--border, #888);
-  border-radius: 12px;
-  background: var(--card-bg, #fff);
 }
