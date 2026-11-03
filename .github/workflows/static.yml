@@ -33,11 +33,18 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
+      - name: Prepare site files (exclude dev/docs files)
+        run: |
+          mkdir _site
+          tar --exclude='./_site' --exclude='./.git' --exclude='./.github' \
+              --exclude='./.gitignore' --exclude='./CLAUDE.md' \
+              --exclude='./README.md' --exclude='./server.js' \
+              -cf - . | tar -xf - -C _site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
-          path: '.'
+          # Upload only the site files prepared above
+          path: '_site'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
