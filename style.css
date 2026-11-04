@@ -700,3 +700,68 @@ button.small {
     justify-self: center;
   }
 }
+
+
+/* אחידות מלאה: כל כפתורי הפעולה באותו צבע ובאותה מסגרת */
+#links .card-actions a.btn-link,
+#links .card-actions a.btn-primary,
+#links .card-actions a.btn-secondary {
+  background: linear-gradient(135deg, #2456a6, #173b78) !important;
+  color: #ffffff !important;
+  border: 2px solid #38bdf8 !important;
+  border-radius: 13px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18),
+              0 0 0 1px rgba(56, 189, 248, .22),
+              0 0 12px rgba(56, 189, 248, .32) !important;
+}
+
+/* הדגשה אחידה בלחיצה או במעבר עכבר */
+#links .card-actions a.btn-link:hover,
+#links .card-actions a.btn-link:active {
+  background: linear-gradient(135deg, #2d6bc4, #1c4c91) !important;
+  border-color: #7dd3fc !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22),
+              0 0 0 2px rgba(125, 211, 252, .2),
+              0 0 16px rgba(56, 189, 248, .55) !important;
+}
+
+/* במובייל שומרים על שתי שורות בלבד: 2 כפתורים למעלה ועד 3 למטה */
+@media (max-width: 600px) {
+  #links .card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  #links .card-actions .action-row {
+    display: grid;
+    width: 100%;
+    max-width: 100%;
+    gap: 7px;
+  }
+
+  #links .card-actions .primary-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #links .card-actions .primary-row.single-button-row {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 50%;
+    justify-self: center;
+  }
+
+  #links .card-actions .secondary-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  #links .card-actions a.btn-link {
+    width: 100%;
+    min-width: 0;
+    min-height: 52px;
+    padding: 8px 4px;
+    font-size: 12px;
+    line-height: 1.25;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
