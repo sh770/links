@@ -135,6 +135,7 @@ input::placeholder {
   color: var(--text-dim);
 }
 
+
 input:focus {
   outline: none;
   border-color: var(--accent);
