@@ -967,3 +967,156 @@ body {
     white-space: normal;
   }
 }
+
+/* ===== אחידות כפתורים גם בדף הניהול ===== */
+
+/* עיצוב משותף לכל כפתורי הפעולה בניהול: התחברות, שמירה, העתקה, QR ומחיקה */
+#loginCard button,
+#manageCard button,
+#manageCard .admin-home-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 2px solid #38bdf8 !important;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #2456a6, #173b78) !important;
+  color: #fff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18),
+              0 0 0 1px rgba(56, 189, 248, .22),
+              0 0 12px rgba(56, 189, 248, .32) !important;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+/* גם כפתורי מחיקה וכפתורים משניים משתמשים באותו עיצוב */
+#manageCard button.secondary,
+#manageCard button.danger,
+#manageCard button.small {
+  background: linear-gradient(135deg, #2456a6, #173b78) !important;
+  color: #fff !important;
+}
+
+/* הדגשה אחידה בלחיצה או במעבר עכבר */
+#loginCard button:hover,
+#manageCard button:hover,
+#manageCard .admin-home-link:hover,
+#loginCard button:active,
+#manageCard button:active {
+  background: linear-gradient(135deg, #2d6bc4, #1c4c91) !important;
+  border-color: #7dd3fc !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22),
+              0 0 0 2px rgba(125, 211, 252, .2),
+              0 0 16px rgba(56, 189, 248, .55) !important;
+}
+
+/* כפתור ההתחברות וכפתור הוספת הקישור נפרסים לרוחב הכרטיס */
+#loginCard > button,
+#manageCard .addform > button {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* שורת דף הבית והתנתקות מחולקת לשני כפתורים שווים */
+#manageCard > div:first-child {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px !important;
+  min-width: 0;
+}
+
+#manageCard > div:first-child > div:last-child {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-width: 0;
+  gap: 8px !important;
+}
+
+#manageCard .admin-home-link {
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+  margin: 0;
+  padding: 8px 5px;
+  font-size: 13px;
+}
+
+/* פעולות בכל קישור מוצגות בשלושה טורים שווים */
+#linksList .link-body .field-row[id^="actions-"] {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  min-width: 0;
+  gap: 7px;
+}
+
+/* כל כפתור פעולה ממלא את התא שלו ולא גורם לגלישה */
+#linksList .link-body .field-row[id^="actions-"] button {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 52px;
+  margin: 0;
+  padding: 8px 4px;
+  font-size: 13px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* שורת אישור מחיקה: הטקסט ושני הכפתורים נשארים מסודרים */
+#linksList .link-body .field-row[id^="actions-"] > span {
+  grid-column: 1 / -1;
+  text-align: center;
+}
+
+/* כפתור הסרת סיסמה מקבל רוחב טבעי בלי לחרוג מהשורה */
+#manageCard .field-row button.small {
+  min-width: 0;
+}
+
+/* מונעים גלישה אופקית גם בכרטיסים ובשדות הניהול */
+#manageCard,
+#loginCard,
+#linksList,
+#linksList .link-item,
+#linksList .link-body,
+#linksList .link-body > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
+  #manageCard > div:first-child {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #manageCard > div:first-child > div:last-child {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #linksList .link-body .field-row[id^="actions-"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  #linksList .link-body .field-row[id^="actions-"] button {
+    min-height: 52px;
+    padding: 8px 3px;
+    font-size: 12px;
+  }
+
+  #loginCard button,
+  #manageCard .addform > button {
+    width: 100%;
+  }
+}
