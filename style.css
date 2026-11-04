@@ -637,3 +637,22 @@ button.small {
   box-shadow: 0 0 0 1px rgba(125, 211, 252, .3),
               0 0 17px rgba(56, 189, 248, .52);
 }
+
+
+/* חיזוק המסגרת במכשירים ניידים כדי שתהיה ברורה בכל סוגי הכפתורים */
+@media (max-width: 600px) {
+  #links .card-actions a.btn-link {
+    border: 2px solid #38bdf8 !important;
+    outline: 1px solid rgba(125, 211, 252, .55);
+    outline-offset: -4px;
+    box-shadow: inset 0 0 0 1px rgba(56, 189, 248, .22),
+                0 0 9px rgba(56, 189, 248, .38) !important;
+  }
+
+  #links .card-actions a.btn-link:active,
+  #links .card-actions a.btn-link:focus {
+    border-color: #7dd3fc !important;
+    box-shadow: inset 0 0 0 1px rgba(125, 211, 252, .4),
+                0 0 13px rgba(56, 189, 248, .55) !important;
+  }
+}
