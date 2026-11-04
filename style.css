@@ -656,3 +656,47 @@ button.small {
                 0 0 13px rgba(56, 189, 248, .55) !important;
   }
 }
+
+
+/* במובייל מציגים את כל הכפתורים באותה רשת ובאותו מבנה */
+@media (max-width: 600px) {
+  /* הופכים את שתי שורות הכפתורים לרשימה אחת אחידה */
+  #links .card-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  /* מבטלים את החלוקה לשורות נפרדות */
+  #links .card-actions .action-row {
+    display: contents;
+  }
+
+  /* קובעים לכל הכפתורים צורה, גובה ומסגרת זהים */
+  #links .card-actions a.btn-link {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 54px;
+    max-width: none;
+    margin: 0;
+    padding: 10px 6px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    border: 3px solid #38bdf8 !important;
+    border-radius: 13px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12),
+                0 0 10px rgba(56, 189, 248, .42) !important;
+  }
+
+  /* אם נשאר מספר אי-זוגי של כפתורים, ממקמים את האחרון במרכז */
+  #links .card-actions a.btn-link:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    width: 50%;
+    justify-self: center;
+  }
+}
