@@ -765,3 +765,21 @@ button.small {
     overflow-wrap: anywhere;
   }
 }
+
+
+/* מרכזים את זוג הכפתורים בשורה התחתונה כאשר מוצגים רק שניים */
+@media (max-width: 600px) {
+  #links .card-actions .secondary-row.buttons-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 76%;
+    max-width: 360px;
+    margin-inline: auto;
+  }
+
+  /* כאשר יש שלושה כפתורים, הם ממלאים את כל רוחב השורה */
+  #links .card-actions .secondary-row.buttons-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    margin-inline: auto;
+  }
+}
