@@ -609,3 +609,31 @@ button.small {
     padding: 9px 13px;
   }
 }
+
+
+/* מסגרת תכלת-כחולה זוהרת לכפתורים */
+/* מסגרת בולטת עם זוהר עדין לכפתורי הקישורים בדף הבית */
+#links .card-actions .btn-link {
+  border: 2px solid #38bdf8;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, .18),
+              0 0 10px rgba(56, 189, 248, .28);
+}
+
+/* חיזוק הזוהר בעת מעבר עכבר */
+#links .card-actions .btn-link:hover {
+  border-color: #7dd3fc;
+  box-shadow: 0 0 0 1px rgba(125, 211, 252, .3),
+              0 0 15px rgba(56, 189, 248, .5);
+}
+
+/* מסגרת תואמת לכפתור החזרה בדף הניהול */
+.admin-home-link {
+  border: 2px solid #38bdf8;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, .18),
+              0 0 12px rgba(56, 189, 248, .32);
+}
+.admin-home-link:hover {
+  border-color: #7dd3fc;
+  box-shadow: 0 0 0 1px rgba(125, 211, 252, .3),
+              0 0 17px rgba(56, 189, 248, .52);
+}
