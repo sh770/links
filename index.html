@@ -288,7 +288,7 @@ async function loadLinks() {
       // ==================================================
 
       const primaryRow = document.createElement("div");
-      primaryRow.className = "action-row";
+      primaryRow.className = "action-row primary-row";
 
       // כפתור פתיחת יעד - רק בקישור שאינו מוגן ושכתובתו תקינה (http/https)
       if (!protectedLink && isSafeUrl(value.url)) {
@@ -313,6 +313,9 @@ async function loadLinks() {
 
       primaryRow.appendChild(btnShort);
 
+      // התאמת מספר העמודות למספר הכפתורים בפועל
+      if (primaryRow.children.length === 1) primaryRow.classList.add("single-button-row");
+
       // הוספת השורה הראשונה לאזור הכפתורים
       actions.appendChild(primaryRow);
 
@@ -321,7 +324,7 @@ async function loadLinks() {
       // ==================================================
 
       const secondaryRow = document.createElement("div");
-      secondaryRow.className = "action-row";
+      secondaryRow.className = "action-row secondary-row";
 
       // כפתור העתקת יעד - רק בקישור שאינו מוגן
       if (!protectedLink) {
@@ -409,6 +412,9 @@ async function loadLinks() {
 
       // הוספת כפתור ההעתקה אחרי QR
       secondaryRow.appendChild(btnCopyShort);
+
+      // התאמת מספר העמודות למספר הכפתורים בפועל
+      secondaryRow.classList.add("buttons-" + secondaryRow.children.length);
 
       // הוספת השורה השנייה לאזור הכפתורים
       actions.appendChild(secondaryRow);
