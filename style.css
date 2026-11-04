@@ -520,3 +520,92 @@ button.small {
     font-size: 13px;
   }
 }
+
+
+/* ===== תיקון פריסת כפתורי דף הבית במסכים רחבים ===== */
+#links .card-actions {
+  align-items: center;
+  width: 100%;
+}
+#links .card-actions .action-row {
+  width: 100%;
+  max-width: 560px;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+}
+#links .card-actions .btn-link {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 48px;
+  margin: 0;
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+#links .card-actions .primary-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+#links .card-actions .primary-row.single-button-row {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 276px;
+}
+#links .card-actions .secondary-row.buttons-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 370px;
+}
+#links .card-actions .secondary-row.buttons-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+#links .card-actions .qr-box {
+  width: fit-content;
+  max-width: 100%;
+  border: 2px solid var(--accent);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .22);
+}
+
+/* ===== כפתור חזרה מעוצב בדף הניהול ===== */
+.admin-home-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 44px;
+  margin: 0;
+  padding: 10px 18px;
+  border: 1px solid rgba(91, 124, 250, .55);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), #405ed0);
+  color: #fff !important;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .22);
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+.admin-home-link span:first-child {
+  font-size: 19px;
+  line-height: 1;
+}
+.admin-home-link:hover {
+  background: linear-gradient(135deg, var(--accent-hover), #354fb8);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 7px 17px rgba(0, 0, 0, .3);
+  filter: brightness(1.05);
+}
+@media (max-width: 600px) {
+  #links .card-actions .action-row {
+    max-width: 100%;
+    gap: 7px;
+  }
+  #links .card-actions .btn-link {
+    padding: 9px 5px;
+    font-size: 13px;
+    white-space: normal;
+  }
+  .admin-home-link {
+    min-height: 42px;
+    padding: 9px 13px;
+  }
+}
