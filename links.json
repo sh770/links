@@ -61,5 +61,13 @@
     "maxClicks": null,
     "passwordHash": null,
     "hidden": false
+  },
+  "k": {
+    "title": "קרן המזון - מכון הלכה",
+    "url": "https://keren.machon-halacha.co.il/",
+    "created": "2026-11-05T12:19:24.349Z",
+    "maxClicks": null,
+    "passwordHash": null,
+    "hidden": false
   }
 }
