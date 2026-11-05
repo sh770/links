@@ -77,5 +77,13 @@
     "maxClicks": null,
     "passwordHash": null,
     "hidden": true
+  },
+  "day": {
+    "title": "תזכורת ימי הולדת ונישואין",
+    "url": "https://sh770.github.io/family/",
+    "created": "2026-11-05T17:50:46.070Z",
+    "maxClicks": null,
+    "passwordHash": null,
+    "hidden": true
   }
 }
