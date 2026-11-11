@@ -133,6 +133,30 @@ function showDeadEnd(html) {
   }, 1000);
 }
 
+// בודק אם הקישור נמצא מחוץ לחלון הפעילות לפי שעון ישראל.
+function getScheduleBlockMessage(schedule) {
+  if (!schedule) return "";
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Jerusalem", year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", weekday: "short", hourCycle: "h23"
+  }).formatToParts(now);
+  const part = type => parts.find(item => item.type === type)?.value || "";
+  const today = part("year") + "-" + part("month") + "-" + part("day");
+  const currentTime = part("hour") + ":" + part("minute");
+  const dayNumber = ({Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6})[part("weekday")];
+
+  if (schedule.startDate && today < schedule.startDate) return "הקישור עדיין לא פעיל. תאריך תחילת הפעילות: " + schedule.startDate;
+  if (schedule.endDate && today > schedule.endDate) return "תוקף הקישור הסתיים בתאריך " + schedule.endDate;
+  if (Array.isArray(schedule.days) && schedule.days.length && !schedule.days.includes(dayNumber)) {
+    return "הקישור אינו פעיל היום. בדוק את ימי הפעילות המוגדרים.";
+  }
+  if (schedule.startTime && schedule.endTime && (currentTime < schedule.startTime || currentTime >= schedule.endTime)) {
+    return "הקישור אינו פעיל כרגע. שעות הפעילות: " + schedule.startTime + "–" + schedule.endTime + " (שעון ישראל).";
+  }
+  return "";
+}
+
 async function redirect() {
   const slug = getSlug();
   currentSlug = slug;
@@ -167,6 +191,12 @@ async function redirect() {
 
   if (!isSafeUrl(link.url)) {
     showDeadEnd('היעד של הקישור <b>' + escapeHtml(slug) + '</b> אינו תקין.');
+    return;
+  }
+
+  const scheduleMessage = getScheduleBlockMessage(link.schedule);
+  if (scheduleMessage) {
+    showDeadEnd(escapeHtml(scheduleMessage));
     return;
   }
 
