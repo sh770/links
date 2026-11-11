@@ -92,6 +92,14 @@
     "created": "2026-11-11T15:48:57.289Z",
     "maxClicks": null,
     "passwordHash": null,
-    "hidden": false
+    "hidden": false,
+    "schedule": {
+      "timezone": "Asia/Jerusalem",
+      "startDate": null,
+      "endDate": "2026-11-22",
+      "days": null,
+      "startTime": null,
+      "endTime": null
+    }
   }
 }
