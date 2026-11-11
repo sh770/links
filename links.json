@@ -68,7 +68,18 @@
     "created": "2026-11-05T12:19:24.349Z",
     "maxClicks": null,
     "passwordHash": null,
-    "hidden": false
+    "hidden": false,
+    "schedule": {
+      "timezone": "Asia/Jerusalem",
+      "startDate": null,
+      "endDate": null,
+      "days": [
+        0,
+        3
+      ],
+      "startTime": "20:00",
+      "endTime": "22:00"
+    }
   },
   "family": {
     "title": "ימי הולדת ונישואין במשפחת הרפז",
