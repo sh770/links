@@ -12,6 +12,15 @@
   .addform{display:flex;flex-direction:column;gap:14px}
   .addform input{margin-bottom:0}
   .addform > button{width:100%;margin-top:4px}
+  .schedule-editor{border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--surface-2)}
+  .schedule-editor summary{cursor:pointer;font-weight:700}
+  .schedule-fields{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+  .schedule-help{margin:0;color:var(--text-dim);font-size:13px;line-height:1.5}
+  .schedule-days{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
+  .schedule-days label{display:flex;align-items:center;gap:5px;font-size:14px}
+  .schedule-days input{width:auto;margin:0}
+  .schedule-fields .field-row{display:flex;gap:10px}
+  .schedule-fields .field-row>div{flex:1;min-width:0}
 </style>
 </head>
 <body>
@@ -57,6 +66,29 @@
         <span class="field-label">סיסמה (אופציונלי)</span>
         <input id="newPw" type="password">
       </div>
+      <details class="schedule-editor">
+        <summary>⏱ הגבלת תאריכים, ימים ושעות (אופציונלי)</summary>
+        <div class="schedule-fields">
+          <p class="schedule-help">השאר את השדות ריקים כדי לא להגביל את הקישור. השעות לפי שעון ישראל.</p>
+          <div class="field-row">
+            <div><span class="field-label">פעיל מתאריך</span><input id="newStartDate" type="date"></div>
+            <div><span class="field-label">פעיל עד תאריך (כולל)</span><input id="newEndDate" type="date"></div>
+          </div>
+          <div><span class="field-label">ימים פעילים (ללא בחירה = כל הימים)</span>
+            <div class="schedule-days">
+              <label><input type="checkbox" id="newDay0"> א׳</label><label><input type="checkbox" id="newDay1"> ב׳</label>
+              <label><input type="checkbox" id="newDay2"> ג׳</label><label><input type="checkbox" id="newDay3"> ד׳</label>
+              <label><input type="checkbox" id="newDay4"> ה׳</label><label><input type="checkbox" id="newDay5"> ו׳</label>
+              <label><input type="checkbox" id="newDay6"> שבת</label>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><span class="field-label">משעה</span><input id="newStartTime" type="time"></div>
+            <div><span class="field-label">עד שעה</span><input id="newEndTime" type="time"></div>
+          </div>
+          <p class="schedule-help">יש למלא את שתי השעות יחד. שעת הסיום צריכה להיות מאוחרת משעת ההתחלה באותו יום.</p>
+        </div>
+      </details>
       <label class="check-row"><input type="checkbox" id="newHidden"> הסתר מהקטלוג הציבורי</label>
       <button onclick="addLink()">➕ הוסף ושמור בשרת</button>
     </div>
@@ -304,6 +336,25 @@ function renderList() {
           '<input type="password" placeholder="הגדר/החלף סיסמה" onchange="editPw(\'' + s + '\', this.value)">' +
         '</div>' +
         '<label class="check-row"><input type="checkbox" ' + (link.hidden ? 'checked ' : '') + 'onchange="editHidden(\'' + s + '\', this.checked)"> הסתר מהקטלוג הציבורי</label>' +
+        '<details class="schedule-editor">' +
+          '<summary>⏱ הגבלת תאריכים, ימים ושעות</summary>' +
+          '<div class="schedule-fields">' +
+            '<p class="schedule-help">השאר את השדות ריקים כדי לא להגביל. השעות לפי שעון ישראל.</p>' +
+            '<div class="field-row">' +
+              '<div><span class="field-label">פעיל מתאריך</span><input id="schedule-start-' + attrHtml(slug) + '" type="date" value="' + attrHtml((link.schedule && link.schedule.startDate) || '') + '"></div>' +
+              '<div><span class="field-label">פעיל עד תאריך (כולל)</span><input id="schedule-end-' + attrHtml(slug) + '" type="date" value="' + attrHtml((link.schedule && link.schedule.endDate) || '') + '"></div>' +
+            '</div>' +
+            '<div><span class="field-label">ימים פעילים (ללא בחירה = כל הימים)</span><div class="schedule-days">' +
+              ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','שבת'].map((day, i) => '<label><input type="checkbox" id="schedule-day-' + attrHtml(slug) + '-' + i + '" ' + ((link.schedule && Array.isArray(link.schedule.days) && link.schedule.days.includes(i)) ? 'checked' : '') + '> ' + day + '</label>').join('') +
+            '</div></div>' +
+            '<div class="field-row">' +
+              '<div><span class="field-label">משעה</span><input id="schedule-from-' + attrHtml(slug) + '" type="time" value="' + attrHtml((link.schedule && link.schedule.startTime) || '') + '"></div>' +
+              '<div><span class="field-label">עד שעה</span><input id="schedule-to-' + attrHtml(slug) + '" type="time" value="' + attrHtml((link.schedule && link.schedule.endTime) || '') + '"></div>' +
+            '</div>' +
+            '<p class="schedule-help">יש למלא את שתי השעות יחד. שעת הסיום צריכה להיות מאוחרת משעת ההתחלה באותו יום.</p>' +
+            '<button class="secondary" onclick="saveSchedule(\\'' + s + '\\')">שמור הגבלות זמן</button>' +
+          '</div>' +
+        '</details>' +
         '<div class="qr-holder" data-shown="0"></div>' +
         '<div class="field-row" id="actions-' + attrHtml(slug) + '">' +
           '<button class="secondary small" onclick="copyLink(\'' + s + '\')">העתק קישור</button>' +
@@ -360,6 +411,42 @@ function renameSlug(oldSlug, newSlugRaw) {
 function editHidden(slug, checked) {
   links[slug].hidden = !!checked;
   saveLinks();
+}
+
+function saveSchedule(slug) {
+  const value = id => document.getElementById(id).value.trim();
+  const startDate = value("schedule-start-" + slug);
+  const endDate = value("schedule-end-" + slug);
+  const startTime = value("schedule-from-" + slug);
+  const endTime = value("schedule-to-" + slug);
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    if (document.getElementById("schedule-day-" + slug + "-" + i).checked) days.push(i);
+  }
+  if (startDate && endDate && startDate > endDate) {
+    toast("תאריך ההתחלה חייב להיות לפני תאריך הסיום");
+    return;
+  }
+  if (!!startTime !== !!endTime) {
+    toast("כדי להגביל שעות יש למלא גם שעת התחלה וגם שעת סיום");
+    return;
+  }
+  if (startTime && endTime && startTime >= endTime) {
+    toast("שעת הסיום חייבת להיות מאוחרת משעת ההתחלה");
+    return;
+  }
+  const schedule = {
+    timezone: "Asia/Jerusalem",
+    startDate: startDate || null,
+    endDate: endDate || null,
+    days: days.length ? days : null,
+    startTime: startTime || null,
+    endTime: endTime || null
+  };
+  const limited = schedule.startDate || schedule.endDate || schedule.days || schedule.startTime;
+  links[slug].schedule = limited ? schedule : null;
+  saveLinks();
+  toast("הגבלות הזמן נשמרו");
 }
 
 function editTitle(slug, value) {
@@ -425,6 +512,15 @@ async function addLink() {
   const url = document.getElementById("newUrl").value.trim();
   const max = document.getElementById("newMax").value.trim();
   const pw = document.getElementById("newPw").value;
+  const startDate = document.getElementById("newStartDate").value;
+  const endDate = document.getElementById("newEndDate").value;
+  const startTime = document.getElementById("newStartTime").value;
+  const endTime = document.getElementById("newEndTime").value;
+  const days = [];
+  for (let i = 0; i < 7; i++) if (document.getElementById("newDay" + i).checked) days.push(i);
+  if (startDate && endDate && startDate > endDate) { toast("תאריך ההתחלה חייב להיות לפני תאריך הסיום"); return; }
+  if (!!startTime !== !!endTime) { toast("כדי להגביל שעות יש למלא גם שעת התחלה וגם שעת סיום"); return; }
+  if (startTime && endTime && startTime >= endTime) { toast("שעת הסיום חייבת להיות מאוחרת משעת ההתחלה"); return; }
   if (!slug || !url) return;
   if (!isSafeUrl(url)) {
     toast("כתובת היעד חייבת להתחיל ב-http:// או ב-https://");
@@ -448,7 +544,15 @@ async function addLink() {
     created: new Date().toISOString(),
     maxClicks: max ? parseInt(max, 10) : null,
     passwordHash: pw ? await sha256(pw) : null,
-    hidden: document.getElementById("newHidden").checked
+    hidden: document.getElementById("newHidden").checked,
+    schedule: (startDate || endDate || days.length || startTime) ? {
+      timezone: "Asia/Jerusalem",
+      startDate: startDate || null,
+      endDate: endDate || null,
+      days: days.length ? days : null,
+      startTime: startTime || null,
+      endTime: endTime || null
+    } : null
   };
   document.getElementById("newTitle").value = "";
   document.getElementById("newHidden").checked = false;
@@ -456,6 +560,11 @@ async function addLink() {
   document.getElementById("newUrl").value = "";
   document.getElementById("newMax").value = "";
   document.getElementById("newPw").value = "";
+  document.getElementById("newStartDate").value = "";
+  document.getElementById("newEndDate").value = "";
+  document.getElementById("newStartTime").value = "";
+  document.getElementById("newEndTime").value = "";
+  for (let i = 0; i < 7; i++) document.getElementById("newDay" + i).checked = false;
   renderList();
   saveLinks(true);
 }
