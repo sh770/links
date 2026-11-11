@@ -85,5 +85,13 @@
     "maxClicks": null,
     "passwordHash": null,
     "hidden": true
+  },
+  "vo": {
+    "title": "וולר",
+    "url": "https://live.idanwaller.com/experts?ref=lead_3cd785aae7e347cd8416a8db4627838e",
+    "created": "2026-11-11T15:48:57.289Z",
+    "maxClicks": null,
+    "passwordHash": null,
+    "hidden": false
   }
 }
