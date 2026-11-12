@@ -8,7 +8,7 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20261112-3">
 
 <style>
   /* עיצוב ייחודי לדף הבית */
@@ -447,6 +447,17 @@ async function loadLinks() {
 
       // הוספת השורה השנייה לאזור הכפתורים
       actions.appendChild(secondaryRow);
+
+      // בקישור מוגן מאחדים את שלושת הכפתורים לשורה אחת
+      // משתמשים באותה מחלקת שורה של שלושת הכפתורים הרגילה כדי לשמור על עיצוב זהה
+      if (protectedLink) {
+        const protectedRow = document.createElement("div"); // יצירת שורה אחידה לכפתורים המוגנים
+        protectedRow.className = "action-row secondary-row buttons-3"; // שימוש בפריסת שלושת הכפתורים הקיימת
+        protectedRow.appendChild(btnShort); // הוספת פתיחת הקישור המקוצר
+        protectedRow.appendChild(btnQr); // הוספת כפתור ה-QR
+        protectedRow.appendChild(btnCopyShort); // הוספת העתקת הקישור המקוצר
+        actions.replaceChildren(protectedRow); // החלפת שתי השורות הישנות בשורה אחידה אחת
+      }
 
       // הוספת אזור הכפתורים לכרטיס
       card.appendChild(actions);
