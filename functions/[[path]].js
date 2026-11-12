@@ -97,9 +97,17 @@ export async function onRequest(context) {
 
   // מכינים תיאור ברור של ימי ושעות הפעילות כדי שהמבקר ידע מתי לחזור.
   const dayNames = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
-  const activeDays = Array.isArray(schedule.days) && schedule.days.length
-    ? schedule.days.map((day) => dayNames[day]).filter(Boolean).map((day) => "יום " + day).join(", ")
-    : "";
+  const activeDaysList = Array.isArray(schedule.days) && schedule.days.length
+    ? schedule.days.map((day) => dayNames[day]).filter(Boolean)
+    : [];
+  // מציגים יום יחיד או רשימת ימים בניסוח עברי תקין.
+  const formatActiveDays = (days) => {
+    if (days.length === 1) return "ביום " + days[0];
+    if (days.length === 2) return "בימי " + days[0] + " ו" + days[1];
+    if (days.length > 2) return "בימי " + days.slice(0, -1).join(", ") + " ו" + days[days.length - 1];
+    return "";
+  };
+  const activeDays = formatActiveDays(activeDaysList);
   const activeHours = schedule.startTime && schedule.endTime
     ? " בין השעות " + schedule.startTime + "–" + schedule.endTime
     : "";
