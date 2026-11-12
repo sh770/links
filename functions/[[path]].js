@@ -106,18 +106,18 @@ export async function onRequest(context) {
 
   // בודקים אם היום הנוכחי אינו אחד מימי הפעילות שהוגדרו.
   if (!blockMessage && Array.isArray(schedule.days) && schedule.days.length && !schedule.days.includes(dayNumber)) {
-    blockMessage = "הקישור אינו פעיל היום. ניתן להיכנס ב" + activeDays + activeHours + " (שעון " + timeZone + ").";
+    blockMessage = "הקישור אינו פעיל היום. ניתן להיכנס ב" + activeDays + activeHours + " (שעון ישראל).";
   }
 
   // אם עדיין מוקדם מדי, מציינים מאיזו שעה ניתן להיכנס היום.
   if (!blockMessage && schedule.startTime && schedule.endTime && currentTime < schedule.startTime) {
-    blockMessage = "הקישור עדיין לא פעיל היום. אפשר להיכנס החל מהשעה " + schedule.startTime + " (שעון " + timeZone + ").";
+    blockMessage = "הקישור עדיין לא פעיל היום. אפשר להיכנס החל מהשעה " + schedule.startTime + " (שעון ישראל).";
   }
 
   // אם שעות הפעילות להיום הסתיימו, מציגים את חלון הפעילות הבא לפי ההגדרות.
   if (!blockMessage && schedule.startTime && schedule.endTime && currentTime >= schedule.endTime) {
     blockMessage = "שעות הפעילות להיום הסתיימו. ניתן להיכנס ב" +
-      (activeDays || "ימי הפעילות המוגדרים") + activeHours + " (שעון " + timeZone + ").";
+      (activeDays || "ימי הפעילות המוגדרים") + activeHours + " (שעון ישראל).";
   }
 
   // אם הקישור פעיל, ממשיכים להתנהגות הקיימת של האתר.
