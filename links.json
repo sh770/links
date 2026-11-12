@@ -52,7 +52,15 @@
     "maxClicks": null,
     "passwordHash": null,
     "title": "בחירת יום להנצחה",
-    "hidden": true
+    "hidden": true,
+    "schedule": {
+      "timezone": "Asia/Jerusalem",
+      "startDate": null,
+      "endDate": "2026-12-01",
+      "days": null,
+      "startTime": null,
+      "endTime": null
+    }
   },
   "ra": {
     "title": "פטפטו חופשי עם רמבל",
