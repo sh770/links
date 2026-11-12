@@ -309,6 +309,8 @@ async function loadLinks() {
       // יצירת אזור הכפתורים
       const actions = document.createElement("div");
       actions.className = "card-actions";
+      // סימון כרטיס מוגן כדי להציג את כל כפתוריו בשורה אחת
+      if (protectedLink) actions.classList.add("protected-actions");
 
       // ==================================================
       // שורה ראשונה: פתיחת יעד ופתיחת קישור מקוצר
