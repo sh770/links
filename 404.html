@@ -23,7 +23,7 @@
 
   // טוען את style.css מהנתיב הנכון (לא ניתן להשתמש ב-<link> קבוע כי
   // דף 404 מוגש עבור כתובות שונות, אז הנתיב היחסי לא תמיד נכון)
-  document.write('<link rel="stylesheet" href="' + (REPO_BASE || "/") + 'style.css">');
+  document.write('<link rel="stylesheet" href="' + (REPO_BASE || "/") + 'style.css?v=20261112-4">');
   document.write('<link rel="icon" href="' + (REPO_BASE || "/") + 'favicon.svg" type="image/svg+xml">');
   document.write('<link rel="icon" href="' + (REPO_BASE || "/") + 'favicon.ico" sizes="32x32">');
 </script>
@@ -117,20 +117,10 @@ async function checkPassword() {
 }
 
 function showDeadEnd(html) {
-  const base = REPO_BASE || "/";
+  // מציגים את הודעת החסימה ונשארים בדף ללא הפניה אוטומטית.
   document.getElementById("box").style.display = "block";
   document.getElementById("msg").innerHTML =
-    html + '<div style="margin-top:10px;font-size:13px;color:var(--text-dim)">מעביר אותך לדף הבית בעוד <span id="countdown">3</span>...</div>';
-  let seconds = 3;
-  const timer = setInterval(() => {
-    seconds -= 1;
-    const el = document.getElementById("countdown");
-    if (el) el.textContent = seconds;
-    if (seconds <= 0) {
-      clearInterval(timer);
-      location.replace(base);
-    }
-  }, 1000);
+    '<h1>הקישור חסום כרגע</h1><p>' + html + '</p>';
 }
 
 // בודק אם הקישור נמצא מחוץ לחלון הפעילות לפי שעון ישראל.
@@ -146,13 +136,24 @@ function getScheduleBlockMessage(schedule) {
   const currentTime = part("hour") + ":" + part("minute");
   const dayNumber = ({Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6})[part("weekday")];
 
-  if (schedule.startDate && today < schedule.startDate) return "הקישור עדיין לא פעיל. תאריך תחילת הפעילות: " + schedule.startDate;
-  if (schedule.endDate && today > schedule.endDate) return "תוקף הקישור הסתיים בתאריך " + schedule.endDate;
+  if (schedule.startDate && today < schedule.startDate) return "הקישור עדיין לא פעיל. הוא יהיה זמין החל מתאריך " + schedule.startDate + ".";
+  if (schedule.endDate && today > schedule.endDate) return "תוקף הקישור פג בתאריך " + schedule.endDate + ".";
+  const dayNames = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+  const activeDays = Array.isArray(schedule.days) && schedule.days.length
+    ? schedule.days.map(day => dayNames[day]).filter(Boolean).map(day => "יום " + day).join(", ")
+    : "";
+  const activeHours = schedule.startTime && schedule.endTime
+    ? " בין השעות " + schedule.startTime + "–" + schedule.endTime
+    : "";
   if (Array.isArray(schedule.days) && schedule.days.length && !schedule.days.includes(dayNumber)) {
-    return "הקישור אינו פעיל היום. בדוק את ימי הפעילות המוגדרים.";
+    return "הקישור אינו פעיל היום. ניתן להיכנס ב" + activeDays + activeHours + " (שעון ישראל).";
   }
-  if (schedule.startTime && schedule.endTime && (currentTime < schedule.startTime || currentTime >= schedule.endTime)) {
-    return "הקישור אינו פעיל כרגע. שעות הפעילות: " + schedule.startTime + "–" + schedule.endTime + " (שעון ישראל).";
+  if (schedule.startTime && schedule.endTime && currentTime < schedule.startTime) {
+    return "הקישור עדיין לא פעיל היום. אפשר להיכנס החל מהשעה " + schedule.startTime + " (שעון ישראל).";
+  }
+  if (schedule.startTime && schedule.endTime && currentTime >= schedule.endTime) {
+    return "שעות הפעילות להיום הסתיימו. ניתן להיכנס ב" +
+      (activeDays || "ימי הפעילות המוגדרים") + activeHours + " (שעון ישראל).";
   }
   return "";
 }
