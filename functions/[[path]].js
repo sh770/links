@@ -92,19 +92,32 @@ export async function onRequest(context) {
 
   // בודקים אם תאריך סיום הפעילות כבר עבר.
   if (!blockMessage && schedule.endDate && today > schedule.endDate) {
-    blockMessage = "תוקף הקישור הסתיים בתאריך " + schedule.endDate;
+    blockMessage = "תוקף הקישור פג בתאריך " + schedule.endDate + ".";
   }
+
+  // מכינים תיאור ברור של ימי ושעות הפעילות כדי שהמבקר ידע מתי לחזור.
+  const dayNames = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+  const activeDays = Array.isArray(schedule.days) && schedule.days.length
+    ? schedule.days.map((day) => dayNames[day]).filter(Boolean).map((day) => "יום " + day).join(", ")
+    : "";
+  const activeHours = schedule.startTime && schedule.endTime
+    ? " בין השעות " + schedule.startTime + "–" + schedule.endTime
+    : "";
 
   // בודקים אם היום הנוכחי אינו אחד מימי הפעילות שהוגדרו.
   if (!blockMessage && Array.isArray(schedule.days) && schedule.days.length && !schedule.days.includes(dayNumber)) {
-    blockMessage = "הקישור אינו פעיל היום. בדוק את ימי הפעילות המוגדרים.";
+    blockMessage = "הקישור אינו פעיל היום. ניתן להיכנס ב" + activeDays + activeHours + " (שעון " + timeZone + ").";
   }
 
-  // בודקים אם השעה הנוכחית נמצאת מחוץ לטווח שעות הפעילות.
-  if (!blockMessage && schedule.startTime && schedule.endTime &&
-      (currentTime < schedule.startTime || currentTime >= schedule.endTime)) {
-    blockMessage = "הקישור אינו פעיל כרגע. שעות הפעילות: " +
-      schedule.startTime + "–" + schedule.endTime + " (שעון ישראל).";
+  // אם עדיין מוקדם מדי, מציינים מאיזו שעה ניתן להיכנס היום.
+  if (!blockMessage && schedule.startTime && schedule.endTime && currentTime < schedule.startTime) {
+    blockMessage = "הקישור עדיין לא פעיל היום. אפשר להיכנס החל מהשעה " + schedule.startTime + " (שעון " + timeZone + ").";
+  }
+
+  // אם שעות הפעילות להיום הסתיימו, מציגים את חלון הפעילות הבא לפי ההגדרות.
+  if (!blockMessage && schedule.startTime && schedule.endTime && currentTime >= schedule.endTime) {
+    blockMessage = "שעות הפעילות להיום הסתיימו. ניתן להיכנס ב" +
+      (activeDays || "ימי הפעילות המוגדרים") + activeHours + " (שעון " + timeZone + ").";
   }
 
   // אם הקישור פעיל, ממשיכים להתנהגות הקיימת של האתר.
@@ -120,11 +133,11 @@ export async function onRequest(context) {
     '"': "&quot;"
   })[character]);
 
-  // מציגים הודעת חסימה קבועה ללא הפניה אוטומטית ליעד או לדף הבית.
+  // מציגים הודעת חסימה בעיצוב האתר, ללא הפניה אוטומטית.
   return new Response(
-    "<!doctype html><html lang=\"he\" dir=\"rtl\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>הקישור אינו פעיל</title><style>body{font-family:Arial,sans-serif;background:#f5f6fa;color:#202536;display:grid;place-items:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}.box{max-width:440px;width:100%;background:white;border-radius:16px;padding:28px;box-shadow:0 8px 30px #0001;text-align:center}h1{font-size:23px;margin:0 0 14px}p{line-height:1.7;margin:0}</style></head><body><main class=\"box\"><h1>הקישור חסום כרגע</h1><p>" +
+    "<!doctype html><html lang=\\"he\\" dir=\\"rtl\\"><head><meta charset=\\"utf-8\\"><meta name=\\"viewport\\" content=\\"width=device-width,initial-scale=1\\"><title>הקישור אינו פעיל</title><link rel=\\"stylesheet\\" href=\\"/style.css?v=20261112-4\\"></head><body><div class=\\"center-page\\"><main class=\\"box\\"><h1>הקישור חסום כרגע</h1><p>" +
       safeMessage +
-      "</p></main></body></html>",
+      "</p></main></div></body></html>",
     {
       status: 403,
       headers: {
