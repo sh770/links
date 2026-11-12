@@ -1121,3 +1121,45 @@ body {
     width: 100%;
   }
 }
+
+
+/* קישורים מוגנים: כל שלושת כפתורי הפעולה מוצגים בשורה אחת */
+#links .card-actions.protected-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 7px;
+}
+
+/* מאחדים את הכפתורים משתי הקבוצות לאותה שורת תצוגה */
+#links .card-actions.protected-actions .action-row {
+  display: contents;
+}
+
+/* מבטיחים שכל כפתור מוגן ימלא שליש מהרוחב */
+#links .card-actions.protected-actions a.btn-link {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  min-height: 52px;
+  margin: 0;
+  padding: 8px 3px;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  #links .card-actions.protected-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    gap: 6px;
+  }
+
+  #links .card-actions.protected-actions a.btn-link {
+    min-height: 52px;
+    padding-inline: 2px;
+    font-size: 11px;
+  }
+}
