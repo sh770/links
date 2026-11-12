@@ -135,9 +135,7 @@ export async function onRequest(context) {
 
   // מציגים הודעת חסימה בעיצוב האתר, ללא הפניה אוטומטית.
   return new Response(
-    "<!doctype html><html lang=\\"he\\" dir=\\"rtl\\"><head><meta charset=\\"utf-8\\"><meta name=\\"viewport\\" content=\\"width=device-width,initial-scale=1\\"><title>הקישור אינו פעיל</title><link rel=\\"stylesheet\\" href=\\"/style.css?v=20261112-4\\"></head><body><div class=\\"center-page\\"><main class=\\"box\\"><h1>הקישור חסום כרגע</h1><p>" +
-      safeMessage +
-      "</p></main></div></body></html>",
+    `<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>הקישור אינו פעיל</title><link rel="stylesheet" href="/style.css?v=20261112-5"></head><body><div class="center-page"><main class="box"><h1>הקישור חסום כרגע</h1><p>${safeMessage}</p></main></div></body></html>`,
     {
       status: 403,
       headers: {
