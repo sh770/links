@@ -114,7 +114,7 @@ export async function onRequest(context) {
 
   // בודקים אם היום הנוכחי אינו אחד מימי הפעילות שהוגדרו.
   if (!blockMessage && Array.isArray(schedule.days) && schedule.days.length && !schedule.days.includes(dayNumber)) {
-    blockMessage = "הקישור אינו פעיל היום. ניתן להיכנס ב" + activeDays + activeHours + " (שעון ישראל).";
+    blockMessage = "הקישור אינו פעיל היום. ניתן להיכנס " + activeDays + activeHours + " (שעון ישראל).";
   }
 
   // אם עדיין מוקדם מדי, מציינים מאיזו שעה ניתן להיכנס היום.
