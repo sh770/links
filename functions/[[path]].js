@@ -19,7 +19,7 @@ export async function onRequest(context) {
   let linksResponse;
   try {
     const linksUrl = new URL("/links.json", url);
-    linksResponse = await context.next(new Request(linksUrl, { method: "GET" }));
+    linksResponse = await context.env.ASSETS.fetch(new Request(linksUrl, { method: "GET" }));
     if (!linksResponse.ok) {
       throw new Error("links.json is unavailable");
     }
