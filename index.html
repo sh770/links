@@ -202,11 +202,26 @@ async function loadLinks() {
       const key = item[0];
       const value = item[1];
 
+      // בדיקה האם הקישור מוגן בסיסמה, בזמן או במספר כניסות
+      const schedule = value.schedule || {};
+      const hasTimeRestriction = !!(
+        schedule.startDate ||
+        schedule.endDate ||
+        (Array.isArray(schedule.days) && schedule.days.length > 0) ||
+        schedule.startTime ||
+        schedule.endTime
+      );
+      const protectedLink = !!(
+        value.passwordHash ||
+        hasTimeRestriction ||
+        (value.maxClicks !== null && value.maxClicks !== undefined)
+      );
+
       // אין להציג כתובת יעד של קישור מוגן בחיפוש
       const text = (
         key + " " +
         (value.title || "") + " " +
-        (value.passwordHash ? "" : value.url)
+        (protectedLink ? "" : (value.url || ""))
       ).toLowerCase();
 
       return text.indexOf(filter.toLowerCase()) !== -1;
@@ -240,8 +255,20 @@ async function loadLinks() {
       // יצירת הכתובת המקוצרת
       const shortUrl = location.origin + BASE + key;
 
-      // בדיקה האם הקישור מוגן בסיסמה
-      const protectedLink = !!value.passwordHash;
+      // בדיקה האם הקישור מוגן בסיסמה, בזמן או במספר כניסות
+      const schedule = value.schedule || {};
+      const hasTimeRestriction = !!(
+        schedule.startDate ||
+        schedule.endDate ||
+        (Array.isArray(schedule.days) && schedule.days.length > 0) ||
+        schedule.startTime ||
+        schedule.endTime
+      );
+      const protectedLink = !!(
+        value.passwordHash ||
+        hasTimeRestriction ||
+        (value.maxClicks !== null && value.maxClicks !== undefined)
+      );
 
       // יצירת כרטיס הקישור
       const card = document.createElement("div");
@@ -271,9 +298,9 @@ async function loadLinks() {
 
       const spanTarget = document.createElement("span");
 
-      // הסתרת כתובת היעד בקישור מוגן
+      // הסתרת כתובת היעד בכל סוג של קישור מוגן
       spanTarget.textContent = protectedLink
-        ? "🔒 מוגן בסיסמה"
+        ? "🔒 קישור מוגן – היעד מוסתר"
         : value.url;
 
       pTarget.appendChild(spanTarget);
